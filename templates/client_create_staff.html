@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+
+  
+
+    <div class="form-container p-4 shadow-lg rounded bg-white" style="max-width: 400px; width: 100%; margin-right:450px;">
+        <center><h2>Create Staff</h2></center>
+        {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-info">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+        <form action="" method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" class="form-control" placeholder="Enter name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="Enter email" required>
+            </div>
+            
+
+            <div class="form-group">
+                <label for="whatsapp">WhatsApp Number</label>
+                <input type="number" id="whatsapp" name="whatsapp" class="form-control" placeholder="Enter WhatsApp" required>
+            </div>
+            <input type="hidden" name="client_id" value="{{ request.user.client.id }}">
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary btn-block">Create</button>
+            </div>
+        </form>
+    </div>
+
+
+<script>
+    setTimeout(function(){
+        var alert = document.querySelector(".alert");
+        if (alert) {
+            alert.style.display = "none";
+        }
+    }, 3000); // Message disappears after 3 seconds
+</script>
+
+{% endblock %}
+
+

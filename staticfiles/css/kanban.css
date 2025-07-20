@@ -1,0 +1,177 @@
+.kanban-board {
+    display: flex;
+    gap: 20px;
+    background:  rgb(202, 219, 225);
+    padding: 20px;
+    border-radius: 10px;
+    height: 100vh; /* Full height */
+    width: 1200px;  /* Full width */
+    overflow: hidden; /* Prevent unwanted scrolling */
+   
+    
+}
+.kanban-column {
+  width: 250px;
+  background: #ebecf0;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+
+  .kanban-column:nth-child(1) h3 { background: #0079bf; } /* Blue */
+  .kanban-column:nth-child(2) h3 { background: #519839; } /* Green */
+  .kanban-column:nth-child(3) h3 { background: #d29034; } /* Orange */
+  .kanban-column:nth-child(4) h3 { background: #b04632; } /* Red */
+  .kanban-column:nth-child(5) h3 { background: #89609e; } /* Purple */
+  .kanban-column h3 {
+    text-align: center;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+
+  }
+  .kanban-cards {
+    flex-grow: 1;
+    max-height: 75vh; /* Enable scrolling inside the column */
+    overflow-y: auto; /* Allow vertical scrolling for long lists */
+    padding: 10px;
+    border-radius: 5px;
+}
+.lead-card {
+  background: white;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: grab;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  width: 100%; /* Ensure the card stays inside */
+  margin-bottom: 10px; /* Add space between cards */
+}
+
+.lead-card:hover {
+  background: #dfe6ee;
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+  .add-lead-card {
+    background: #ffffff;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background 0.2s;
+  }
+  .add-lead-card:hover {
+    background: #dfe6ee;
+  }
+  .back-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 10px 15px;
+    background:rgb(124, 190, 207);
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background 0.2s;
+    text-decoration: none;
+    color: black;
+  }
+
+  .back-button:hover {
+    background: #dfe6ee;
+  }
+  .lead-details-container {
+    position: fixed;
+    top: 50px;
+    right: 150px;
+    width: 800px; /* Adjust width as needed */
+    height: 80vh;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    overflow-y: auto;
+    display: flex; /* Ensures left and right sections are side by side */
+    align-items: stretch; /* Makes both sections have the same height */
+    gap: 10px; /* Adds space between left and right sections */
+}
+
+/* Ensure left and right sections take correct proportions */
+.lead-details-left {
+    flex: 2; /* Takes 2 parts of the available space */
+    padding: 10px;
+    overflow-y: auto;
+    border-radius: 5px;
+}
+
+.lead-details-right {
+    flex: 1; /* Takes 1 part of the available space */
+    width: 250px;
+    padding: 10px;
+    border-left: 2px solid #ddd;
+    background: #f9f9f9;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.form-controlDescription{
+  width:400px;
+  height:100px;
+}
+.form-controlActivity{
+  width:400px;
+}
+/* Tab navigation styling */
+.tab-content {
+  padding: 15px;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  min-height: 180px;
+}
+.nav-tabs {
+    border-bottom: 2px solid #ddd;
+    background: #f8f9fa;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.nav-tabs .nav-item {
+    margin-right: 5px;
+}
+
+.nav-tabs > li > a {
+  background-color: #f8f9fa; /* Light background for all tabs */
+  color: #343a40; /* Dark text */
+  border: 1px solid #dee2e6;
+  margin-right: 2px;
+  border-radius: 4px 4px 0 0;
+}
+
+.nav-tabs > li > a:hover {
+  background-color: #e9ecef;
+  color: #007bff;
+}
+.nav-tabs > li.active > a,
+    .nav-tabs > li.active > a:focus,
+    .nav-tabs > li.active > a:hover {
+        background-color: #007bff; /* Bootstrap primary */
+        color: #fff;
+        border: 1px solid #dee2e6;
+        border-bottom-color: transparent;
+    }
+.cke_editable {
+    max-height: 200px;
+    overflow-y: auto;
+}

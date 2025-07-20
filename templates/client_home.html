@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #e0eafc, #cfdef3);
+  }
+
+  .desktop-background {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .dock {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 20px;
+    padding: 10px 25px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    display: flex;
+    gap: 40px;
+    z-index: 999;
+  }
+
+  .dock-icon {
+    text-align: center;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.3s ease-in-out;
+  }
+
+  .dock-icon img {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+  }
+
+  .dock-icon span {
+    display: block;
+    margin-top: 5px;
+    font-size: 13px;
+    color: #333;
+    transition: color 0.3s ease;
+  }
+
+  .dock-icon:hover img {
+    transform: scale(1.4);
+  }
+
+  .dock-icon:hover span {
+    color: #007bff;
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .dock {
+      gap: 20px;
+      padding: 8px 16px;
+    }
+    .dock-icon img {
+      width: 38px;
+      height: 38px;
+    }
+    .dock-icon span {
+      font-size: 11px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .dock {
+      bottom: 20px;
+      padding: 6px 12px;
+      gap: 12px;
+    }
+    .dock-icon img {
+      width: 32px;
+      height: 32px;
+    }
+    .dock-icon span {
+      font-size: 10px;
+    }
+  }
+</style>
+
+<div class="desktop-background">
+  <div class="dock">
+    <a href="{% url 'client_dashboard' %}" class="dock-icon">
+      <img src="{% static 'images/dashboard_icon.png' %}" alt="Dashboard">
+      <span>Leads</span>
+    </a>
+
+    
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

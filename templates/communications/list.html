@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Call History</h3>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Lead</th>
+      <th>Time</th>
+      <th>Status</th>
+      <th>Duration</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for call in calls %}
+    <tr>
+      <td>{{ call.lead.firstname }} {{ call.lead.lastname }}</td>
+      <td>{{ call.call_time }}</td>
+      <td>{{ call.get_status_display }}</td>
+      <td>{{ call.duration }} min</td>
+      <td>{{ call.notes }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

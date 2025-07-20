@@ -1,0 +1,79 @@
+.pagination {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.pagination a {
+    padding: 8px 12px;
+    margin: 2px;
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.pagination a:hover {
+    background: #0056b3;
+}
+
+.pagination .current {
+    padding: 8px 12px;
+    margin: 2px;
+    background: #28a745;
+    color: white;
+    border-radius: 5px;
+}
+
+/* Container for search and buttons */
+.search-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 30px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    width:1160px;
+  
+}
+
+.search-container form {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.search-container input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px 0 0 8px; /* Rounded only on left side */
+  font-size: 16px;
+  outline: none;
+  flex-grow: 1;
+}
+
+.search-container button {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-left: none; /* Remove gap */
+  border-radius: 0 8px 8px 0; /* Rounded only on right side */
+  font-size: 16px;
+  background-color: #aacef5;
+  cursor: pointer;
+}
+
+.search-container select
+ {
+  margin-left: 10px; /* Adds space */
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 16px;
+ 
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+}

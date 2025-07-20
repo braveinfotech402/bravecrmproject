@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Estimate Preview</title>
+  <style>
+    body, p, h2, h4, table {
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      margin: 40px;
+      background-color: #fff;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    h2 {
+      color: #2c3e50;
+      font-weight: 700;
+      font-size: 28px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 6px;
+    }
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+    .customer-details, .estimate-details {
+      width: 48%;
+    }
+    .customer-details h4, .estimate-details h4 {
+      margin-bottom: 10px;
+      font-size: 16px;
+      color: #34495e;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 4px;
+    }
+    .customer-details p, .estimate-details p {
+      margin: 4px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    thead {
+      background-color: #3498db;
+      color: #fff;
+      font-weight: 600;
+      text-align: left;
+    }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .total {
+      margin-top: 20px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #e67e22;
+      text-align: right;
+    }
+    .notes {
+      margin-top: 30px;
+      font-style: italic;
+      background: #f3f3f3;
+      border-left: 4px solid #3498db;
+      padding: 12px 15px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div id="estimatePrintable">
+    <h2>Estimate Preview</h2>
+
+    <!-- ✅ Header Section -->
+    <div class="header-section">
+      <div class="customer-details">
+        <h4>Customer Details</h4>
+        <p><strong>Name:</strong> {{ customer_name }}</p>
+        <p><strong>Email:</strong> {{ customer_email }}</p>
+        <p><strong>Phone:</strong> {{ customer_phone }}</p>
+        <p><strong>Address:</strong> {{ customer_address }}</p>
+      </div>
+      <div class="estimate-details">
+        <h4>Estimate Info</h4>
+        <p><strong>Estimate #:</strong> {{ estimate_number }}</p>
+        <p><strong>Customer Ref:</strong> {{ customer_ref }}</p>
+        <p><strong>Date:</strong> {{ date }}</p>
+        <p><strong>Valid Until:</strong> {{ valid_until }}</p>
+      </div>
+    </div>
+
+    <!-- ✅ Items Table -->
+    <h4>Items</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th style="width: 70px;">Qty</th>
+          <th style="width: 100px;">Price</th>
+          <th style="width: 100px;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in items %}
+        <tr>
+          <td>{{ row.0 }}</td>
+          <td>{{ row.1 }}</td>
+          <td>₹{{ row.2 }}</td>
+          <td>₹{{ row.3 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- ✅ Add total here -->
+<div class="text-end mb-4">
+  <h6 class="fw-bold">Total:</h6>
+  <p id="viewEstimateTotal" class="text-success fs-5 fw-semibold">₹0.00</p>
+</div>
+
+    <!-- ✅ Notes Section -->
+    <h4>Notes</h4>
+    <div class="notes">
+      <p>{{ notes|default:"No additional notes." }}</p>
+    </div>
+  </div>
+</body>
+
+</html>

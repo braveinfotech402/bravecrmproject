@@ -1,0 +1,1767 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+
+  #product-rows input.qty {
+  width: 120px;
+}
+
+#product-rows input.price {
+  width: 140px;
+}
+ #editInvoiceItemsTable input.form-control,
+#addToEstimate input.form-control {
+  width: 100% !important;
+  box-sizing: border-box;
+}
+      .nav-pills .nav-link {
+      border-radius: 20px;
+      text-align: center;
+      background-color:rgb(228, 228, 132); /* Light grey */
+      color: #333;
+      font-weight: 500;
+      margin-bottom: 10px;
+      transition: background-color 0.2s;
+      width:300px;
+    }
+   #productTabs {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.5rem; /* spacing between buttons */
+  }
+
+  #productTabs .nav-item {
+    flex: 1 1 auto;
+  }
+
+ #productTabs .nav-link {
+    width: 150px;       /* set your desired width */
+    padding: 0.3rem 0.5rem;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
+    .nav-pills .nav-link:hover {
+      background-color: #e2e6ea;
+    }
+
+    .nav-pills .nav-link.active {
+      background-color: #0d6efd; /* Bootstrap primary */
+      color: #fff;
+    }
+    
+    
+
+    .tab-pane {
+      padding: 1rem;
+      border: 1px solid #dee2e6;
+      
+      height: 100%;
+    }
+
+    .vertical-tab-container {
+      min-height: 300px;
+    }
+</style>
+<link rel="stylesheet" href="{% static 'css/kanban.css' %}">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- CSRF Token for JS -->
+<input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+<form id="create-column-form" class="mb-4 p-3 bg-light rounded shadow-sm d-flex align-items-center gap-2">
+    <input 
+      type="text" 
+      id="new-column-name" 
+      name="column_name" 
+      placeholder="Enter column name" 
+      class="form-control form-control-sm flex-grow-1"
+      required
+    >
+    <label for="new-column-color" class="mb-1">🎨 Pick a color</label>
+    <input 
+      type="color" 
+      id="new-column-color" 
+      name="color" 
+      value="#dddddd" 
+      class="form-control form-control-color"
+      title="Choose column color"
+    >
+  
+    <button type="submit" class="btn btn-primary btn-sm">
+      ➕ Add Column
+    </button>
+   
+    <a href="{% url 'client_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+        ⬅ Back to Leads
+      </a>
+    
+  </form>
+  
+
+<div class="kanban-wrapper">
+  <div class="kanban-board" id="kanban-board">
+    {% for status_key, status_label in statuses %}
+      <div class="kanban-column" data-status="{{ status_key }}">
+        <h3>{{ status_label }}</h3>
+        <div class="kanban-cards" ondragover="allowDrop(event)" ondrop="handleDrop(event)">
+          {% if status_key == "new" %}
+            <div class="add-lead-card" style="background-color:#97b8cb;" onclick="window.location.href='{% url 'createlead' %}?status={{ status_key }}'">
+              + Add Lead
+            </div>
+          {% endif %}
+          {% for lead in leads %}
+            {% if lead.status == status_key %}
+              <div class="lead-card" data-lead-id="{{ lead.id }}" onclick="openLeadDetails({{ lead.id }})" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', '{{ lead.id }}')">
+                {{ lead.firstname }} {{ lead.lastname }}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  
+    {% for column in columns %}
+      <div class="kanban-column" data-status="{{ column.slug }}">
+        <h4 style="background-color: {{ column.color }}; color: #fff; padding: 10px; border-radius: 5px 5px 0 0;">
+          {{ column.name }}
+        </h4>
+        <div class="kanban-cards" ondragover="allowDrop(event)" ondrop="handleDrop(event)">
+          {% for lead in leads %}
+            {% if lead.status == column.slug %}
+              <div class="lead-card" data-lead-id="{{ lead.id }}" draggable="true" onclick="openProposalTab({{ lead.id }})" ondragstart="event.dataTransfer.setData('text/plain', '{{ lead.id }}')">
+                {{ lead.firstname }} {{ lead.lastname }}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  </div>
+
+
+
+<!-- Lead Details Container -->
+<div id="leadDetailsContainer" class="lead-details-container" style="display: none;position: fixed;top: 70px;left: 760px;width: 100vw;height: 100vh;z-index: 1050;background-color: white;overflow: hidden;flex-direction: row;">
+  <button id="closeLeadBtn" style="position: absolute; top: 10px; right: 10px; background:rgb(48, 25, 200); color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 16px; border-radius: 50%;">
+        ✖
+    </button>
+    <div style="flex: 3; padding: 10px; overflow-y: auto;border-radius:5px;" class="lead-details-left">
+
+        <ul class="nav nav-tabs" id="leadTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="description-tab" data-bs-toggle="tab" href="#descriptionTab" role="tab" aria-controls="descriptionTab" aria-selected="true">Description</a>
+            </li>
+
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="deal-tab" data-bs-toggle="tab" href="#dealTab" role="tab" aria-controls="dealTab" aria-selected="false">
+  Proposal
+</a>
+
+            </li>
+
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="estimate-tab" data-bs-toggle="tab" href="#estimatetab" role="tab" aria-controls="estimatetab" aria-selected="false">Estimate</a>
+          </li>
+            
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="invoice-tab" data-bs-toggle="tab" href="#invoicetab" role="tab" aria-controls="invoicetab" aria-selected="false">Invoice</a>
+            </li>
+
+            
+
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="projects-tab" data-bs-toggle="tab" href="#projectsTab" role="tab" aria-controls="projectsTab" aria-selected="false">Projects</a>
+            </li>
+
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="meetings-tab" data-bs-toggle="tab" href="#meetingsTab" role="tab" aria-controls="meetingsTab" aria-selected="false">Meetings</a>
+            </li>
+
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="files-tab" data-bs-toggle="tab" href="#filesTab" role="tab" aria-controls="filesTab" aria-selected="false">Files</a>
+            </li>
+
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="financial-tab" data-bs-toggle="tab" href="#financialTab" role="tab" aria-controls="financialTab" aria-selected="false">Financial</a>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="leadTabsContent">
+
+      <!-- DESCRIPTION TAB -->
+<div class="tab-pane fade show active" id="descriptionTab" role="tabpanel" aria-labelledby="description-tab">
+  <div style="display: flex; gap: 20px;">
+    
+    
+    <div style="flex: 2; border: 1px solid #ccc; padding: 10px; min-height: 400px;">
+      <input type="hidden" id="lead-id" value="">
+
+     <div id="description-label" style="white-space: pre-wrap; min-height: 300px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background-color: #f9f9f9;">
+ 
+</div>
+
+
+
+      <br/>
+      <button id="save-lead-details" class="btn btn-primary btn-sm">click here to Edit</button>
+      <button id="cancel-lead-details" class="btn btn-secondary btn-sm">Cancel</button>
+    </div>
+
+    <!-- RIGHT SIDE: Comments & Activity Log -->
+    <div style="flex: 1; border: 1px solid #ccc; padding: 10px; min-height: 400px; background-color: rgba(234, 241, 244, 1);">
+      <h5>Comments and Activity</h5>
+      <hr/>
+<div class="input-group mb-3"> 
+  <input type="text" class="form-control me-2" id="activity-note-input" placeholder="Write a comment">
+   <button class="btn btn-primary" type="button" onclick="addActivityNote()">Add</button> 
+  </div>
+    <div style="flex: 1; overflow-y: auto; max-height: 500px;">
+      <ul id="activity-log" style="list-style: none; padding-left: 0; margin-top: 10px;">
+        <li><em>No activity yet.</em></li>
+      </ul>
+    </div>
+  </div>
+  </div>
+</div>
+
+
+
+        <!-- ESTIMATE TAB -->
+<div class="tab-pane fade" id="estimatetab" role="tabpanel" aria-labelledby="estimate-tab">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5>Estimates</h5>
+<button 
+  class="btn btn-success" 
+  data-bs-toggle="modal" 
+  data-bs-target="#createEstimateModal"
+  onclick="openEstimateModalForLead({{ lead.id }})">
+  <i class="fa fa-plus"></i> Create Estimate
+</button>
+
+
+
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Estimate #</th>
+          <th>Company</th>
+          <th>Lead</th>
+          <th>Issue Date</th>
+          <th>Expiry Date</th>
+          <th>Status</th>
+          <th>Total</th>
+          <th style="width: 140px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="estimate-table-body">
+        <tr>
+          <td colspan="8" class="text-center">No estimates found</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+
+
+
+        
+
+
+
+          <!-- INVOICE TAB -->
+          <div class="tab-pane fade" id="invoicetab" role="tabpanel" aria-labelledby="invoice-tab">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5>Invoices</h5>
+  <button 
+  type="button" 
+  class="btn btn-success"
+  data-bs-toggle="modal"
+  data-bs-target="#createInvoiceModal"
+  onclick="openInvoiceModalForLead(currentLeadId)"
+>
+  <i class="fa fa-plus"></i> New Invoice
+</button>
+
+
+            </div>
+          
+            <table class="table table-bordered table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Company</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Issue Date</th>
+                  <th>Due Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for invoice in selected_lead.invoices.all %}
+                <tr>
+                  <td>{{ invoice.invoice_number }}</td>
+                  <td>{{ invoice.company.name }}</td>
+                  <td>₹{{ invoice.total }}</td>
+                  <td>
+                    <span class="badge 
+                      {% if invoice.status == 'paid' %} bg-success 
+                      {% elif invoice.status == 'unpaid' %} bg-danger 
+                      {% elif invoice.status == 'partial' %} bg-warning text-dark 
+                      {% else %} bg-secondary 
+                      {% endif %}">
+                      {{ invoice.status|capfirst }}
+                    </span>
+                  </td>
+                  <td>{{ invoice.issue_date }}</td>
+                  <td>{{ invoice.due_date }}</td>
+                  <td>
+                    <button class="btn btn-sm btn-info" onclick="viewInvoiceDetails({{ invoice.id }})">
+                      <i class="fa fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="editInvoice({{ invoice.id }})">
+                      <i class="fa fa-pen"></i>
+                    </button>
+                    <a href="{{ invoice.download_url }}" class="btn btn-sm btn-secondary">
+                      <i class="fa fa-download"></i>
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center">No invoices found.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        
+
+<!-- Proposal Tab -->
+<div class="tab-pane fade" id="dealTab" role="tabpanel" aria-labelledby="deal-tab">
+  <div class="container mt-4">
+    <div class="row justify-content-center">
+      <div class="col-md-10 col-lg-8"> <!-- Increase column width here -->
+        <form id="proposalForm" enctype="multipart/form-data" class="p-4 shadow-sm bg-light rounded w-100">
+          {% csrf_token %}
+          <input type="hidden" id="proposalLeadId" name="lead_id" value="">
+
+          <div class="mb-3">
+            <label for="proposalToEmail" class="form-label fw-semibold">To</label>
+            <input type="email" id="proposalToEmail" name="to-email" class="form-control" style="width:720px;" readonly>
+          </div>
+
+          <div class="mb-3">
+            <label for="proposal-subject" class="form-label fw-semibold">Subject</label>
+            <input type="text" class="form-control" id="proposal-subject" name="subject" style="width:720px;" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="proposal-message" class="form-label fw-semibold">Description</label>
+            <textarea class="form-control" id="proposal-message" name="message" rows="5" style="width:720px;" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="proposal-file" class="form-label fw-semibold">Attachment</label>
+            <input type="file" class="form-control" id="proposal-file" name="file" accept=".pdf,.docx,.jpg,.png" style="width:720px;">
+          </div>
+
+          <div class="d-grid">
+            <button type="button" class="btn btn-primary" id="sendProposalBtn">Send Proposal</button>
+
+          </div>
+        </form>
+
+
+
+
+        <div id="proposalMessage" class="mt-3"></div>
+        
+        </div>
+
+
+
+        
+      </div>
+    </div>
+  </div>
+
+
+<!-- PROJECT TAB -->
+          <div class="tab-pane fade" id="projectsTab" role="tabpanel" aria-labelledby="projects-tab">
+            {% for project in selected_lead.projects.all %}
+              <div>
+                <strong>{{ project.name }}</strong> - {{ project.status }}<br>
+                <small>{{ project.start_date }} to {{ project.end_date }}</small>
+              </div>
+              <hr>
+            {% empty %}
+              <p>Coming soon...</p>
+            {% endfor %}
+          </div>
+
+
+
+          
+          <!-- MEETING TAB-->
+          <div class="tab-pane fade" id="meetingsTab" role="tabpanel" aria-labelledby="meetings-tab">
+            {% for meeting in selected_lead.meetings.all %}
+              <div>
+                <strong>{{ meeting.topic }}</strong><br>
+                <small>{{ meeting.datetime }}</small><br>
+                <p>{{ meeting.notes }}</p>
+              </div>
+              <hr>
+            {% empty %}
+              <p>Coming soon...</p>
+            {% endfor %}
+          </div>
+
+
+
+           <!-- FILES TAB -->
+          <div class="tab-pane fade" id="filesTab" role="tabpanel" aria-labelledby="files-tab">
+            {% for file in selected_lead.files.all %}
+              <p><a href="{{ file.file.url }}" target="_blank">{{ file.filename }}</a></p>
+            {% empty %}
+              <p>Coming soon...</p>
+            {% endfor %}
+          </div>
+        
+
+
+
+          <!-- FINANCIAL TAB -->
+          <div class="tab-pane fade" id="financialTab" role="tabpanel" aria-labelledby="financial-tab">
+            Coming soon...
+          </div>
+        </div>
+
+
+</div>
+
+
+          
+        
+
+
+
+        
+
+
+
+         
+       
+    
+    
+       <div style="flex: 0.5; width: 250px; padding: 10px; border-left: 2px solid #ddd; background: #f9f9f9; border-radius:5px;" class="lead-details-right">
+          <button class="btn btn-sm btn-success btn-block mb-2" onclick="sendCallFCM(window.currentLeadPhone)">
+    📞 Call
+  </button>
+    <button type="button" class="btn btn-sm btn-info btn-block mb-2" onclick="openEmailModal()">
+    📧 Email
+  </button>
+   <a href="https://wa.me/{{ lead.phone|cut:'+'|cut:' ' }}?text=Hello%20{{ lead.firstname }},%20I%20am%20reaching%20out%20to%20you." target="_blank" class="btn btn-warning btn-sm">WhatsApp</a>
+       
+
+  
+
+    </div>
+</div>
+
+
+<!--Edit Description Modal -->
+<div id="editModal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Lead Description</h5>
+        <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="modal-editor"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button id="saveDescriptionBtn" class="btn btn-success btn-sm">Save</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ESTIMATE CREATION MODAL -->
+<div class="modal fade" id="createEstimateModal" tabindex="-1" aria-labelledby="createEstimateModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="createEstimateModalLabel">Create Estimate</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="estimate-form" onsubmit="return submitEstimateForm(event)">
+
+
+
+          {% csrf_token %}
+<input type="hidden" name="lead_id" id="estimateLeadId">
+
+          <!-- Customer Info -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h5><i class="bi bi-person-plus-fill me-2"></i>Company Details</h5>
+              <div id="estimateCustomerDetails" class="form-control" style="white-space: pre-wrap; height: auto; min-height: 100px; width: 80%; background-color: #e9ecef; text-align: left; padding: 0.375rem 0.75rem;"></div>
+
+
+
+            </div>
+            <div class="col-md-6">
+              <div class="row mb-2">
+                <label class="col-md-4 col-form-label">Estimate #</label>
+                <div class="col-md-8">
+                  <input type="text" id="estimateNumber" name="estimate_number" class="form-control" style="width:100%;" value="{{ estimate_number }}" readonly>
+
+                </div>
+              </div>
+              <div class="row mb-2">
+                <label class="col-md-4 col-form-label">Customer Ref</label>
+                <div class="col-md-8">
+                  <input type="text" name="customer_ref" class="form-control" style="width:100%;">
+                </div>
+              </div>
+              <div class="row mb-2">
+                <label class="col-md-4 col-form-label">Date</label>
+                <div class="col-md-8">
+                  <input type="date" name="date" class="form-control" style="width:100%;" value="{{ today|date:'Y-m-d' }}">
+                </div>
+              </div>
+              <div class="row">
+                <label class="col-md-4 col-form-label">Valid Until</label>
+                <div class="col-md-8">
+                  <input type="date" name="valid_until" class="form-control" style="width:100%;" value="{{ valid_until|date:'Y-m-d' }}">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr>
+
+          <!-- Add Item Button -->
+          <div class="mb-3">
+            <button type="button" class="btn btn-primary btn-sm" id="toggleProductSelector">
+              + Add Product or Service
+            </button>
+          </div>
+
+          <!-- Embedded Product Selector -->
+          <div id="productSelectorBox" style="display:none; border:1px solid #ddd; padding:1rem; border-radius:8px; margin-bottom:1rem;">
+<ul class="nav nav-pills flex-row mb-3" id="productTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active tab-sm" id="physical-tab" data-bs-toggle="pill" data-bs-target="#physical" type="button" role="tab">Physical</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link tab-sm" id="digital-tab" data-bs-toggle="pill" data-bs-target="#digital" type="button" role="tab">Digital</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link tab-sm" id="course-tab" data-bs-toggle="pill" data-bs-target="#course" type="button" role="tab">Course</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link tab-sm" id="service-tab" data-bs-toggle="pill" data-bs-target="#service" type="button" role="tab">Service</button>
+  </li>
+</ul>
+
+
+
+
+            <input type="text" class="form-control mb-3" style="width:100%;" id="productSearch" placeholder="Type a product or service...">
+   
+            <div class="tab-content">
+              <div class="tab-pane fade show active" id="physical"><div class="row" id="physical-list"></div></div>
+              <div class="tab-pane fade" id="digital"><div class="row" id="digital-list"></div></div>
+              <div class="tab-pane fade" id="course"><div class="row" id="course-list"></div></div>
+              <div class="tab-pane fade" id="service"><div class="row" id="service-list"></div></div>
+            </div>
+          </div>
+
+          <!-- Products Table -->
+          <div id="product-table-container" style="display: none;">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                  <th>Amount</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="product-rows"></tbody>
+            </table>
+            <div class="text-end">
+              <p>Subtotal: <span id="subtotal">₹0.00</span></p>
+              <h5>Total: ₹ <span id="total">₹0.00</span></h5>
+            </div>
+          </div>
+
+          <hr>
+
+          <div class="mb-3">
+            <label class="form-label">Notes / Terms</label>
+            <textarea name="notes" class="form-control" style="width:100%;" rows="3" placeholder="Enter notes or terms of service..."></textarea>
+          </div>
+
+          <hr>
+
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary" onclick="previewEstimate()">Preview</button>
+
+            <button type="submit" class="btn btn-success">Save</button>
+            <button type="button" class="btn btn-secondary" onclick="toggleEstimateEdit(false)">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!--EDIT ESTIMATE-->
+<div class="modal fade" id="editEstimateModal" tabindex="-1" aria-labelledby="editEstimateModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-white">
+        <h5 class="modal-title" id="editEstimateModalLabel">Edit Estimate</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-estimate-form" onsubmit="return updateEstimate(event)">
+          <input type="hidden" id="editEstimateId">
+          <input type="hidden" id="editEstimateLeadId">
+          {% csrf_token %}
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label>Estimate #</label>
+              <input type="text" id="editEstimateNumber" class="form-control" style="width:100%;" readonly>
+            </div>
+            <div class="col-md-6">
+              <label>Customer Ref</label>
+              <input type="text" id="editCustomerRef" class="form-control" style="width:100%;">
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label>Issue_date</label>
+              <input type="date" id="editDate" class="form-control" style="width:100%;">
+            </div>
+            <div class="col-md-6">
+              <label>Expiry_date</label>
+              <input type="date" id="editValidUntil" class="form-control" style="width:100%;">
+            </div>
+          </div>
+
+      
+
+          <hr>
+          <h5>Estimate Items</h5>
+          <div class="table-responsive">
+            <table class="table table-bordered" id="editItemTable">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                  <th>Amount</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="editEstimateItemsBody"></tbody>
+            </table>
+          </div>
+
+
+
+
+              <div class="mb-3">
+            <label>Notes</label>
+            <textarea id="editNotes" class="form-control" rows="3" style="width:100%;"></textarea>
+          </div>
+          <div class="text-end">
+            <button type="submit" class="btn btn-success">Update Estimate</button>
+             <button type="button" class="btn btn-info" id="viewEstimateBtn">View</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- VIEW ESTIMATE MODAL -->
+<div class="modal fade" id="viewEstimateModal" tabindex="-1" aria-labelledby="viewEstimateModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="margin-top:80px;">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-info text-white">
+        <h4 class="modal-title fw-bold" id="viewEstimateModalLabel">Estimate Preview</h4>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body p-5" id="estimatePrintable">
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-start flex-wrap">
+            <div>
+              <h3 class="fw-bold mb-1">Estimate</h3>
+              <p class="text-muted mb-0">Estimate #: <span id="viewEstimateNumber" class="fw-semibold text-dark"></span></p>
+              <p class="text-muted mb-0">Customer Ref: <span id="viewCustomerRef" class="fw-normal text-dark"></span></p>
+            </div>
+            <div class="text-end">
+              <h5 id="viewCompanyName" class="fw-bold text-primary mb-1"></h5>
+              <p id="viewCompanyAddress" class="mb-0"></p>
+              <p id="viewCompanyCityState" class="mb-0"></p>
+              <p id="viewCompanyContact" class="mb-0 text-muted small"></p>
+            </div>
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <p><strong>Issue Date:</strong> <span id="viewIssueDate" class="text-dark"></span></p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <p><strong>Expiry Date:</strong> <span id="viewExpiryDate" class="text-dark"></span></p>
+          </div>
+        </div>
+
+        
+
+        
+
+<!-- Table section -->
+<div class="mb-4">
+  <h6 class="fw-bold">Estimate Items</h6>
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Product</th>
+          <th class="text-center">Quantity</th>
+          <th class="text-end">Price</th>
+          <th class="text-end">Amount</th>
+        </tr>
+      </thead>
+      <tbody id="viewEstimateItemsBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ✅ Total block placed here correctly -->
+<div class="text-end mb-4">
+  <h6 class="fw-bold">Total:</h6>
+  <p id="viewEstimateTotal" class="text-success fs-5 fw-semibold mb-0" style="font-weight:600; color:#28a745; font-size:1.2rem;">₹0.00</p>
+</div>
+
+<!-- ✅ Still inside #estimatePrintable -->
+<div class="mb-4">
+  <h6 class="fw-bold">Notes</h6>
+  <p id="viewNotes" class="border rounded p-2 bg-light"></p>
+</div>
+
+
+     <div class="modal-footer bg-light no-print">
+  <button type="button" class="btn btn-success" onclick="convertEstimateToInvoice()">Convert to Invoice</button>
+  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+  <button type="button" class="btn btn-outline-primary" onclick="previewEstimatePDF()">🖨️ Preview</button>
+  <button type="button" class="btn btn-outline-danger" onclick="downloadEstimatePDF()">📥 PDF</button>
+</div>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- INVOICE CREATION MODAL -->
+<div class="modal fade" id="createInvoiceModal" tabindex="-1" aria-labelledby="createInvoiceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" style="margin-top:80px;">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="createInvoiceModalLabel">Create Invoice</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="invoice-form" onsubmit="return submitInvoiceForm(event)">
+          {% csrf_token %}
+          <input type="hidden" name="lead_id" id="invoiceLeadId">
+
+          <!-- Customer Info -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h5><i class="bi bi-person-fill me-2"></i>Company Details</h5>
+              <div id="invoiceCustomerDetails" class="form-control" style="white-space: pre-wrap; height: auto; min-height: 100px; width: 80%; background-color: #e9ecef; text-align: left; padding: 0.375rem 0.75rem;"></div>
+            </div>
+            <div class="col-md-6">
+              <div class="row mb-2">
+                <label class="col-md-4 col-form-label">Invoice #</label>
+                <div class="col-md-8">
+                  <input type="text" id="invoiceNumber" name="invoice_number" class="form-control" style="width:100%;" value="{{ invoice_number }}" readonly>
+                </div>
+              </div>
+              <div class="row mb-2">
+                <label class="col-md-4 col-form-label">Customer Ref</label>
+                <div class="col-md-8">
+                  <input type="text" name="customer_ref" class="form-control" style="width:100%;">
+                </div>
+              </div>
+              <div class="row mb-2">
+                <label class="col-md-4 col-form-label">Issue Date</label>
+                <div class="col-md-8">
+                  <input type="date" name="issue_date" class="form-control" style="width:100%;" value="{{ today|date:'Y-m-d' }}">
+                </div>
+              </div>
+              <div class="row">
+                <label class="col-md-4 col-form-label">Due Date</label>
+                <div class="col-md-8">
+                  <input type="date" name="due_date" class="form-control" style="width:100%;" value="{{ due_date|date:'Y-m-d' }}">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr>
+
+          <!-- Add Item Button -->
+<div class="mb-3">
+  <button type="button" class="btn btn-primary btn-sm" id="toggleInvoiceProductSelector">
+    + Add Product or Service
+  </button>
+</div>
+
+<!-- Embedded Product Selector for Invoice -->
+<div id="invoiceProductSelectorBox" style="display:none; border:1px solid #ddd; padding:1rem; border-radius:8px; margin-bottom:1rem;">
+  <ul class="nav nav-pills flex-row mb-3" id="invoiceProductTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active tab-sm" id="inv-physical-tab" data-bs-toggle="pill" data-bs-target="#inv-physical" type="button" role="tab">Physical</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link tab-sm" id="inv-digital-tab" data-bs-toggle="pill" data-bs-target="#inv-digital" type="button" role="tab">Digital</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link tab-sm" id="inv-course-tab" data-bs-toggle="pill" data-bs-target="#inv-course" type="button" role="tab">Course</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link tab-sm" id="inv-service-tab" data-bs-toggle="pill" data-bs-target="#inv-service" type="button" role="tab">Service</button>
+    </li>
+  </ul>
+
+  <input type="text" class="form-control mb-3" style="width:100%;" id="invoiceProductSearch" placeholder="Search product or service...">
+
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="inv-physical"><div class="row" id="invoice-physical-list"></div></div>
+    <div class="tab-pane fade" id="inv-digital"><div class="row" id="invoice-digital-list"></div></div>
+    <div class="tab-pane fade" id="inv-course"><div class="row" id="invoice-course-list"></div></div>
+    <div class="tab-pane fade" id="inv-service"><div class="row" id="invoice-service-list"></div></div>
+  </div>
+</div>
+
+<!-- Products Table for Invoice -->
+<div id="invoice-product-table-container" style="display: none;">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Qty</th>
+        <th>Price</th>
+        <th>Amount</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="invoice-product-rows"></tbody>
+  </table>
+  <div class="text-end">
+    <p>Subtotal: ₹<span id="invoice-subtotal">0.00</span></p>
+    <h5>Total: ₹<span id="invoice-total">0.00</span></h5>
+  </div>
+</div>
+
+          <hr>
+
+          <!-- Status -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">Status</label>
+            <select name="status" class="form-select">
+              <option value="unpaid" selected>Unpaid</option>
+              <option value="paid">Paid</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Notes / Terms</label>
+            <textarea name="notes" class="form-control" style="width:100%;" rows="3" placeholder="Enter notes or payment terms..."></textarea>
+          </div>
+
+          <hr>
+
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary" onclick="previewInvoice()">Preview</button>
+            <button type="submit" class="btn btn-success">Save</button>
+            <button type="button" class="btn btn-secondary" onclick="toggleInvoiceEdit(false)">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- EDIT INVOICE MODAL -->
+<div class="modal fade" id="editInvoiceModal" tabindex="-1" aria-labelledby="editInvoiceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" style="margin-top:90px;">
+    <form id="editInvoiceForm" onsubmit="submitEditInvoice(event)" class="needs-validation" novalidate>
+      <input type="hidden" id="edit-invoice-id" name="invoice_id" />
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="editInvoiceModalLabel">Edit Invoice</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="edit-invoice-number" class="form-label">Invoice Number</label>
+              <input type="text" id="edit-invoice-number" name="invoice_number" class="form-control" style="width:100%;" required />
+              <div class="invalid-feedback">Please enter invoice number.</div>
+            </div>
+            <div class="col-md-6">
+              <label for="edit-customer-ref" class="form-label">Customer Reference</label>
+              <input type="text" id="edit-customer-ref" name="customer_ref" class="form-control" style="width:100%;" placeholder="Enter customer reference" />
+            </div>
+            <div class="col-md-6">
+              <label for="edit-issue-date" class="form-label">Issue Date</label>
+              <input type="date" id="edit-issue-date" name="issue_date" class="form-control" style="width:100%;" required />
+              <div class="invalid-feedback">Please select issue date.</div>
+            </div>
+            <div class="col-md-6">
+              <label for="edit-due-date" class="form-label">Due Date</label>
+              <input type="date" id="edit-due-date" name="due_date" class="form-control" style="width:100%;" required />
+              <div class="invalid-feedback">Please select due date.</div>
+            </div>
+            <div class="col-md-6">
+              <label for="edit-status" class="form-label">Status</label>
+              <select id="edit-status" name="status" class="form-select" style="width:100%;" required>
+                <option value="unpaid">Unpaid</option>
+                <option value="paid">Paid</option>
+              </select>
+              <div class="invalid-feedback">Please select status.</div>
+            </div>
+            <div class="col-12">
+              <label for="edit-notes" class="form-label">Notes</label>
+              <textarea id="editNotes" name="notes" class="form-control" style="width:100%;" rows="3" placeholder="Add notes (optional)"></textarea>
+            </div>
+          </div>
+
+          <hr />
+
+          <h6>Invoice Items</h6>
+          <table id="editInvoiceItemsTable" class="table table-bordered table-hover mb-3">
+            <!-- dynamically filled rows with product_name, quantity, price, amount -->
+          </table>
+          <!--<button type="button" class="btn btn-sm btn-outline-primary" onclick="addEditInvoiceItemRow()">+ Add Item</button>-->
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Save Changes</button>
+          <button type="button" class="btn btn-info" onclick="viewInvoiceFromEdit()">View</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+<!-- VIEW INVOICE MODAL -->
+<div class="modal fade" id="viewInvoiceModal" tabindex="-1" aria-labelledby="viewInvoiceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="margin-top:80px;">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-info text-white">
+        <h4 class="modal-title fw-bold" id="viewInvoiceModalLabel">Invoice Preview</h4>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body p-5">
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-start flex-wrap">
+            <div>
+              <h3 class="fw-bold mb-1">Invoice</h3>
+              <p class="text-muted mb-0">Invoice #: <span id="viewInvoiceNumber" class="fw-semibold text-dark"></span></p>
+              <p class="text-muted mb-0">Customer Ref: <span id="viewInvoiceCustomerRef" class="fw-normal text-dark"></span></p>
+              <p class="text-muted mb-0">Status: <span id="viewInvoiceStatus" class="fw-semibold text-dark"></span></p>
+            </div>
+            <div class="text-end">
+              <h5 id="viewInvoiceCompanyName" class="fw-bold text-primary mb-1"></h5>
+              <p id="viewInvoiceCompanyAddress" class="mb-0"></p>
+              <p id="viewInvoiceCompanyCityState" class="mb-0"></p>
+              <p id="viewInvoiceCompanyContact" class="mb-0 text-muted small"></p>
+            </div>
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <p><strong>Issue Date:</strong> <span id="viewInvoiceIssueDate" class="text-dark"></span></p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <p><strong>Due Date:</strong> <span id="viewInvoiceDueDate" class="text-dark"></span></p>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <h6 class="fw-bold">Notes</h6>
+          <p id="viewInvoiceNotes" class="border rounded p-2 bg-light"></p>
+        </div>
+
+        <div class="mb-4">
+          <h6 class="fw-bold">Invoice Items</h6>
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Product</th>
+                  <th class="text-center">Quantity</th>
+                  <th class="text-end">Price</th>
+                  <th class="text-end">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="viewInvoiceItemsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+ <!-- JS FILES -->
+<script src="{% static 'js/dragdrop.js' %}"></script>
+<script src="{% static 'js/leadview.js' %}"></script>
+
+<script src="{% static 'js/closebutton.js' %}"></script>
+<script src="{% static 'js/createNewColumn.js' %}"></script>
+<script src="{% static 'js/autoCalculateTotal.js' %}"></script>
+
+<script src="{% static 'js/dealresetform.js' %}"></script>
+<script src="{% static 'js/project reset form.js' %}"></script>
+
+<script src="{% static 'js/addItem.js' %}"></script>
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- CKEditor CDN -->
+
+
+
+
+<!--PREVIEW ESTIMATE-->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script>
+  // Define functions in global scope
+function previewEstimatePDF() {
+  const printContents = document.getElementById("estimatePrintable").innerHTML;
+  const printWindow = window.open('', '_blank', 'width=900,height=700');
+ printWindow.document.write(`
+  <html>
+    <head>
+      <title>Estimate Preview</title>
+      <style>
+        body { padding: 2rem; font-family: Arial, sans-serif; }
+        .table { width: 100%; margin-top: 1rem; }
+        .no-print { display: none !important; }
+      </style>
+    </head>
+    <body>
+      ${printContents}
+    </body>
+  </html>
+`);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+}
+
+function downloadEstimatePDF() {
+  const element = document.getElementById("estimatePrintable");
+  const opt = {
+    margin: 0.5,
+    filename: 'estimate.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      ignoreElements: (el) => el.classList && el.classList.contains('no-print')
+    },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().from(element).set(opt).save();
+}
+
+
+</script>
+
+
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+  const proposalTabBtn = document.getElementById("deal-tab");
+  if (proposalTabBtn) {
+    proposalTabBtn.addEventListener("click", function () {
+      setProposalFields();
+    });
+  }
+});
+
+</script>
+
+
+
+<!--send proposal-->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const sendBtn = document.getElementById("sendProposalBtn");
+
+  if (sendBtn) {
+    sendBtn.addEventListener("click", function () {
+      console.log("Proposal submission started");
+
+      const form = document.getElementById("proposalForm");
+      const formData = new FormData(form);
+      const email = document.getElementById("proposalToEmail").value;
+      formData.append("to_email", email);
+
+      fetch("/send-proposal/", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+        },
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Server response:", data);
+
+        const messageBox = document.getElementById("proposalMessage");
+
+        if (data.success) {
+          messageBox.innerHTML = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              ✅ Proposal sent successfully!
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          `;
+          form.reset();
+
+          // Auto-hide after 5 seconds (optional)
+          setTimeout(() => {
+            const alertEl = messageBox.querySelector('.alert');
+            if (alertEl) {
+              bootstrap.Alert.getOrCreateInstance(alertEl).close();
+            }
+          }, 5000);
+
+        } else {
+          messageBox.innerHTML = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              ❌ Failed to send proposal: ${data.error || 'Unknown error'}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          `;
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        const messageBox = document.getElementById("proposalMessage");
+        messageBox.innerHTML = `
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ❌ An error occurred: ${error}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        `;
+      });
+    });
+  } else {
+    console.error("Send Proposal button not found in DOM.");
+  }
+});
+</script>
+
+
+<!--New product form js-->
+<script>
+  // Show the new product form
+  document.getElementById("showProductFormBtn").addEventListener("click", function () {
+    document.getElementById("new-product-form").style.display = "block";
+  });
+
+  // Save new product and add to dropdown
+  document.getElementById("save-new-product").addEventListener("click", function () {
+    const name = document.getElementById("new-product-name").value.trim();
+
+    if (name) {
+      const select = document.getElementById("product-select");
+      const option = document.createElement("option");
+
+      // Unique ID using timestamp
+      const uniqueId = Date.now();
+
+      option.value = uniqueId;
+      option.text = name;
+      option.setAttribute("data-name", name);
+
+      select.appendChild(option);
+      select.value = uniqueId; // Select newly added product
+
+      // Clear and hide form
+      document.getElementById("new-product-name").value = '';
+      document.getElementById("new-product-form").style.display = "none";
+    } else {
+      alert("Please enter the product or service name.");
+    }
+  });
+</script>
+
+
+
+
+<!--add product-->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const productContainer = {
+    physical: document.getElementById("physical-list"),
+    digital: document.getElementById("digital-list"),
+    course: document.getElementById("course-list"),
+    service: document.getElementById("service-list")
+  };
+
+  const toggleBtn = document.getElementById("toggleProductSelector");
+  const selectorBox = document.getElementById("productSelectorBox");
+  const searchInput = document.getElementById("productSearch");
+
+  let allProducts = [];
+
+  toggleBtn.addEventListener("click", function () {
+    const visible = selectorBox.style.display === "block";
+    selectorBox.style.display = visible ? "none" : "block";
+
+    if (!visible && allProducts.length === 0) {
+      fetch('/api/all-products/')
+        .then(response => response.json())
+        .then(data => {
+          allProducts = data.products;
+          renderProducts(allProducts);
+        })
+        .catch(err => {
+          console.error('Failed to fetch products:', err);
+        });
+    }
+  });
+
+  searchInput.addEventListener("input", function () {
+    const query = this.value.toLowerCase().trim();
+    filterProducts(query);
+  });
+
+  searchInput.addEventListener("keypress", function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const query = this.value.toLowerCase().trim();
+      filterProducts(query);
+    }
+  });
+
+  function filterProducts(query) {
+    const filtered = allProducts.filter(p =>
+      p.name.toLowerCase().includes(query)
+    );
+    renderProducts(filtered);
+  }
+
+  function renderProducts(productsToRender) {
+    Object.values(productContainer).forEach(el => el.innerHTML = '');
+
+    const grouped = { physical: [], digital: [], course: [], service: [] };
+    productsToRender.forEach(prod => grouped[prod.type].push(prod));
+
+    for (const [type, list] of Object.entries(grouped)) {
+      const container = productContainer[type];
+      if (list.length === 0) {
+        container.innerHTML = `<div class="text-muted text-center">No products found.</div>`;
+        continue;
+      }
+
+      const ul = document.createElement("ul");
+      ul.className = "list-group list-group-flush w-100";
+
+      list.forEach(prod => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between align-items-center";
+        li.innerHTML = `
+  <div>
+    <strong>${prod.name}</strong>
+    <div class="text-muted small">${prod.category_name || ''}</div>
+  </div>
+  <div>
+    <span class="me-2 text-primary">₹${parseFloat(prod.price).toFixed(2)}</span>
+    <button type="button" class="btn btn-sm btn-outline-primary" onclick='addToEstimate(${JSON.stringify(prod)})'>Add</button>
+  </div>
+`;
+
+        ul.appendChild(li);
+      });
+
+      container.appendChild(ul);
+    }
+  }
+});
+
+function addToEstimate(product) {
+  const table = document.getElementById("product-rows");
+
+  if (Array.from(table.children).some(row => row.dataset.productId == product.id)) {
+    alert("Product already added.");
+    return;
+  }
+
+  const row = document.createElement("tr");
+  row.dataset.productId = product.id;
+  row.innerHTML = `
+    <td>${product.name}</td>
+    <td><input type="number" value="1" class="form-control qty" style="width:120px;" min="1" onchange="updateTotals()"></td>
+    <td><input type="number" value="${parseFloat(product.price).toFixed(2)}" class="form-control price" style="width:120px;" min="0" step="0.01" onchange="updateTotals()"></td>
+    <td class="amount">₹${parseFloat(product.price).toFixed(2)}</td>
+    <td><button class="btn btn-sm btn-danger" onclick="this.closest('tr').remove(); updateTotals();">Remove</button></td>
+  `;
+  table.appendChild(row);
+  document.getElementById("product-table-container").style.display = 'block';
+  updateTotals();
+
+  // ❌ REMOVE THIS IF YOU SEE IT:
+  // const modal = bootstrap.Modal.getInstance(document.getElementById('productPopupModal'));
+  // modal.hide();
+}
+
+
+function updateTotals() {
+  let subtotal = 0;
+  document.querySelectorAll("#product-rows tr").forEach(row => {
+    const qty = parseFloat(row.querySelector(".qty").value) || 0;
+    const price = parseFloat(row.querySelector(".price").value) || 0;
+    const amount = qty * price;
+    row.querySelector(".amount").textContent = `₹${amount.toFixed(2)}`;
+    subtotal += amount;
+  });
+  document.getElementById("subtotal").textContent = `₹${subtotal.toFixed(2)}`;
+  document.getElementById("total").textContent = `₹${subtotal.toFixed(2)}`;
+}
+</script>
+
+
+
+<!--fill the textarea-->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  let currentLeadId = null;
+
+  // Preload all lead data into JS from Django template
+  window.currentLeadDetails = {
+    {% for lead in leads %}
+      {{ lead.id }}: {
+        firstname: `{{ lead.firstname|default_if_none:""|escapejs }}`,
+        lastname: `{{ lead.lastname|default_if_none:""|escapejs }}`,
+        email: `{{ lead.email|default_if_none:""|escapejs }}`,
+        phone: `{{ lead.phone|default_if_none:""|escapejs }}`,
+        companyname: `{{ lead.companyname|default_if_none:""|escapejs }}`,
+        tax: `{{ lead.tax|default_if_none:""|escapejs }}`,
+        streetaddress: `{{ lead.streetaddress|default_if_none:""|escapejs }}`,
+        streetnumber: `{{ lead.streetnumber|default_if_none:""|escapejs }}`,
+        postalcode: `{{ lead.postalcode|default_if_none:""|escapejs }}`,
+        city: `{{ lead.city|default_if_none:""|escapejs }}`,
+        state: `{{ lead.state|default_if_none:""|escapejs }}`,
+        country: `{{ lead.country|default_if_none:""|escapejs }}`
+      },
+    {% endfor %}
+  };
+
+  // Expose this globally so the button can call it
+  window.openEstimateModalForLead = function (leadId) {
+    currentLeadId = leadId;
+    document.getElementById("estimateLeadId").value = leadId;
+    fillEstimateCustomerDetails(leadId);
+    autoGenerateEstimateNumber();
+  }
+
+  function fillEstimateCustomerDetails(leadId) {
+    const lead = window.currentLeadDetails[leadId];
+    if (!lead) return;
+
+    const lines = [];
+    if (lead.companyname) lines.push(lead.companyname);
+    lines.push(`${lead.firstname || ""} ${lead.lastname || ""}`.trim());
+    if (lead.streetaddress || lead.streetnumber) lines.push(`${lead.streetaddress || ""} ${lead.streetnumber || ""}`.trim());
+    if (lead.city || lead.state || lead.postalcode) lines.push(`${lead.city || ""}, ${lead.state || ""} ${lead.postalcode || ""}`.trim());
+    if (lead.country) lines.push(lead.country);
+    if (lead.phone) lines.push(`Phone: ${lead.phone}`);
+    if (lead.email) lines.push(`Email: ${lead.email}`);
+    if (lead.tax) lines.push(`Tax No: ${lead.tax}`);
+
+    const displayBox = document.getElementById("estimateCustomerDetails");
+    if (displayBox) displayBox.innerText = lines.join("\n");
+  }
+
+  function autoGenerateEstimateNumber() {
+    const now = new Date();
+    const dateStr = now.getFullYear().toString().slice(2) +
+                    String(now.getMonth() + 1).padStart(2, '0') +
+                    String(now.getDate()).padStart(2, '0');
+    const random = Math.floor(Math.random() * 900 + 100);
+    const estNumber = `EST${dateStr}-${random}`;
+
+    const field = document.getElementById("estimateNumber");
+    if (field) field.value = estNumber;
+  }
+});
+</script>
+
+
+
+<!--VIEW ESTIMATE BUTTON -->
+
+<script> document.getElementById('viewEstimateBtn').addEventListener('click', function () {
+  const id = document.getElementById('editEstimateId').value;
+  window.selectedEstimateId = id;
+
+  fetch(`/api/estimates/${id}/`)
+    .then(res => res.json())
+    .then(data => {
+      // Set basic estimate fields
+      document.getElementById('viewEstimateNumber').textContent = data.estimate_number || '-';
+      document.getElementById('viewCustomerRef').textContent = data.customer_ref || '-';
+      document.getElementById('viewIssueDate').textContent = data.issue_date || '-';
+      document.getElementById('viewExpiryDate').textContent = data.expiry_date || '-';
+      document.getElementById('viewNotes').textContent = data.notes || '-';
+
+      // Set lead/company info
+      if (data.lead) {
+        document.getElementById('viewCompanyName').textContent = data.lead.company_name || '-';
+        document.getElementById('viewCompanyAddress').textContent = data.lead.address || '-';
+        document.getElementById('viewCompanyCityState').textContent =
+          `${data.lead.city || ''}, ${data.lead.state || ''} ${data.lead.zip_code || ''}`.trim();
+        document.getElementById('viewCompanyContact').textContent =
+          `${data.lead.phone || ''} | ${data.lead.email || ''}`.trim();
+      }
+
+      // Set estimate item rows
+      const tbody = document.getElementById('viewEstimateItemsBody');
+      tbody.innerHTML = '';
+      let total = 0;
+
+      data.items.forEach(item => {
+        const row = document.createElement('tr');
+        const amount = item.qty * item.price;
+        total += amount;
+
+        row.innerHTML = `
+          <td>${item.name}</td>
+          <td class="text-center">${item.qty}</td>
+          <td class="text-end">₹${parseFloat(item.price).toFixed(2)}</td>
+          <td class="text-end">₹${amount.toFixed(2)}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      // ✅ Set the total
+      document.getElementById('viewEstimateTotal').textContent = '₹' + total.toFixed(2);
+
+      // Show the modal
+      new bootstrap.Modal(document.getElementById('viewEstimateModal')).show();
+    })
+    .catch(error => {
+      console.error('Failed to load estimate details:', error);
+      alert('Something went wrong while loading the estimate.');
+    });
+});
+
+
+</script>
+
+
+<script>
+function convertEstimateToInvoice() {
+  const estimateId = window.selectedEstimateId; // make sure to assign this when opening modal
+
+  fetch(`/api/estimates/${estimateId}/convert-to-invoice/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCookie('csrftoken'),
+      'Content-Type': 'application/json',
+    },
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert("Estimate converted to invoice successfully.");
+        const modal = bootstrap.Modal.getInstance(document.getElementById("viewEstimateModal"));
+        modal.hide();
+        // Optionally reload invoices list
+        if (typeof loadInvoicesForLead === "function") {
+          loadInvoicesForLead(currentLeadId); 
+        }
+      } else {
+        alert("Conversion failed: " + data.error);
+      }
+    })
+    .catch(err => {
+      console.error("Error converting estimate:", err);
+      alert("An error occurred.");
+    });
+}
+
+</script>
+
+<!--RIGHT BUTTONS-->
+<script>
+let currentLeadPhone = "";
+let currentLeadEmail = "";
+let currentLeadName = "";
+
+function setRightPanelLeadDetails(lead) {
+  currentLeadPhone = lead.phone || "";
+  currentLeadEmail = lead.email || "";
+  currentLeadName = `${lead.firstname || ""} ${lead.lastname || ""}`.trim();
+
+  // Update WhatsApp link
+  const whatsappLink = document.getElementById("whatsappLink");
+  const phone = currentLeadPhone.replace("+", "").replace(/\s/g, "");
+  whatsappLink.href = `https://wa.me/${phone}?text=Hello%20${encodeURIComponent(currentLeadName)},%20I%20am%20reaching%20out%20to%20you.`;
+}
+
+function sendCallFCM(phone) {
+  if (!phone) return alert("Phone number not found");
+
+  fetch('/api/send-call/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')  // You must include getCookie function!
+    },
+    body: JSON.stringify({ phone })
+  })
+  .then(response => response.json())
+  .then(data => alert(data.message || 'Notification sent'))
+  .catch(err => {
+    console.error("❌ FCM Call Error:", err);
+    alert("Failed to send FCM notification.");
+  });
+}
+
+function openEmailModal() {
+  // Fill email modal with current lead data
+  document.getElementById("emailModalTo").value = currentLeadEmail;
+  document.getElementById("emailModalName").value = currentLeadName;
+
+  // Open modal
+  const emailModal = new bootstrap.Modal(document.getElementById("emailModal"));
+  emailModal.show();
+}
+</script>
+
+
+
+<!--CALL BUTTON-->
+<script>
+function sendCallFCM(phone) {
+    console.log("📞 Calling:", phone); // Debug
+
+    fetch('/api/send-call/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ phone: phone })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message || 'Notification sent');
+    })
+    .catch(error => {
+        console.error('❌ Error:', error);
+        alert('Failed to send FCM notification.');
+    });
+}
+</script>
+
+<!--ACTIVITY-->
+<script>
+function addActivityNote() {
+  const input = document.getElementById('activity-note-input');
+  const noteText = input.value.trim();
+
+  if (!noteText) {
+    alert('Please enter a comment before adding.');
+    return;
+  }
+
+  const leadId = document.getElementById('lead-id').value;
+
+  fetch(`/leads/${leadId}/add_activity/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCSRFToken(),
+    },
+    body: JSON.stringify({ note: noteText }),
+  })
+  .then(response => {
+    if (!response.ok) throw new Error('Failed to add comment');
+    return response.json();
+  })
+  .then(data => {
+    // Clear input field
+    input.value = '';
+    // Refresh the activity list immediately
+    loadLeadActivities(leadId);
+  })
+  .catch(error => alert(error.message));
+}
+
+// Utility: safely escape HTML to prevent XSS
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Get CSRF token from cookie (adjust if needed)
+function getCSRFToken() {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const c = cookie.trim();
+    if (c.startsWith('csrftoken=')) {
+      return c.substring('csrftoken='.length);
+    }
+  }
+  return '';
+}
+
+</script>
+
+<!--OPEN DESCRIPTION EDIT MODAL-->
+<script>
+  let modalEditorInstance = null;
+
+document.getElementById('save-lead-details').addEventListener('click', function () {
+  const leadId = document.getElementById('lead-id').value;
+
+  fetch(`/leads/${leadId}/get_details/`)
+    .then(res => res.json())
+    .then(data => {
+      const content = `
+        <h2>${escapeHtml(data.email)}</h2>
+        <p><strong>Name:</strong> ${escapeHtml(data.firstname)} ${escapeHtml(data.lastname)}</p>
+        <p><strong>Phone:</strong> ${escapeHtml(data.phone)}</p>
+        <p><strong>Company:</strong> ${escapeHtml(data.companyname)}</p>
+        <p><strong>Status:</strong> ${escapeHtml(data.status)}</p>
+        <p><strong>Street Address:</strong> ${escapeHtml(data.streetaddress)}</p>
+        <p><strong>City:</strong> ${escapeHtml(data.city)}</p>
+        <p><strong>Street Number:</strong> ${escapeHtml(data.streetnumber)}</p>
+        <p><strong>State:</strong> ${escapeHtml(data.state)}</p>
+        <p><strong>Country:</strong> ${escapeHtml(data.country)}</p>
+        <p><strong>Postalcode:</strong> ${escapeHtml(data.postalcode)}</p>
+        
+      `;
+
+      // Show the modal
+      const modal = new bootstrap.Modal(document.getElementById('editModal'));
+      modal.show();
+
+      // Initialize CKEditor
+      if (modalEditorInstance) {
+        modalEditorInstance.setData(content);
+      } else {
+        ClassicEditor
+          .create(document.querySelector('#modal-editor'))
+          .then(editor => {
+            modalEditorInstance = editor;
+            editor.setData(content);
+          })
+          .catch(error => {
+            console.error('CKEditor init error:', error);
+          });
+      }
+    });
+});
+</script>
+
+<!--SAVE DESCRIPTION-->
+<script>
+  document.getElementById('saveDescriptionBtn').addEventListener('click', function () {
+  const leadId = document.getElementById('lead-id').value;
+  const updatedContent = modalEditorInstance.getData();
+
+fetch(`/leads/${leadId}/update_fields/`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRFToken': getCSRFToken()
+  },
+  body: JSON.stringify({ content: modalEditorInstance.getData() })
+})
+
+
+    .then(res => {
+      if (!res.ok) throw new Error('Save failed');
+      return res.json();
+    })
+    .then(data => {
+      alert('Lead details updated successfully!');
+      document.getElementById('editModal').classList.remove('show');
+      document.body.classList.remove('modal-open');
+      document.querySelector('.modal-backdrop').remove();
+    })
+    .catch(err => {
+      console.error('Save error:', err);
+      alert('Failed to save description');
+    });
+});
+</script>
+
+{% endblock %}

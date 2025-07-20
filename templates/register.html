@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Sign Up</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.slim.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <style>
+    .navbar {
+      background-color: darkblue;
+    }
+    .text {
+      color: white;
+      font-size: medium;
+      font-weight: bold;
+    }
+    .bg {
+      background-color: rgb(202, 219, 225);
+    }
+    .container {
+      padding-top: 50px;
+      background-color: rgb(233, 238, 239);
+      width: 50%;
+      border-radius: 10px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body class="bg">
+    
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand text-white" href="#"></a>
+    </div>
+  </nav>
+
+  <!-- ✅ Bootstrap Alert Messages -->
+  <div class="container mt-3">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <div class="container">
+    <center>
+      <h1>Sign Up</h1>
+      <p>Please fill in this form to create an account.</p>
+    </center>
+
+    <form action="" method="post">
+      {% csrf_token %}
+
+      <div class="row">
+        <div class="col">
+          <label for="email">Email:</label>
+          <input type="email" class="form-control" id="email" name="email" value="{{ email }}" placeholder="Enter your email" required>
+
+          <label for="password" class="mt-3">Password:</label>
+          <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+
+          <label for="name">Name:</label>
+          <input type="text" name="name" class="form-control" id="name" placeholder="Enter Name" required>
+
+          <label for="name">Company</label>
+          <input type="text" name="company" class="form-control" id="company" placeholder="Enter company" required>
+
+          <label for="schema">Schema:</label>
+          <input type="text" name="schema_name" class="form-control" id="schema" placeholder="(e.g., tenant5)" required>
+
+          <label for="domain">Domain:</label>
+          <input type="text" name="domain" class="form-control" id="domain" placeholder="(e.g., tenant5.yoursite.com)" required>
+
+          <!-- Add after "Company" -->
+<label for="firstname" class="mt-3">First Name:</label>
+<input type="text" name="firstname" class="form-control" id="firstname" placeholder="Enter First Name">
+
+<label for="lastname" class="mt-3">Last Name:</label>
+<input type="text" name="lastname" class="form-control" id="lastname" placeholder="Enter Last Name">
+
+<label for="streetaddress" class="mt-3">Street Address:</label>
+<input type="text" name="address" class="form-control" id="streetaddress" placeholder="Enter Address">
+
+<label for="streetnumber" class="mt-3">Street Number:</label>
+<input type="text" name="streetnumber" class="form-control" id="streetnumber" placeholder="Enter street Number">
+
+<label for="postalcode" class="mt-3">Postal Code:</label>
+<input type="text" name="postalcode" class="form-control" id="postalcode" placeholder="Enter pin code">
+
+<label for="city" class="mt-3">City:</label>
+<input type="text" name="city" class="form-control" id="city" placeholder="Enter City">
+
+<label for="state" class="mt-3">State:</label>
+<input type="text" name="state" class="form-control" id="state" placeholder="Enter state">
+
+<label for="country" class="mt-3">Country:</label>
+<input type="text" name="country" class="form-control" id="country" placeholder="Enter country">
+
+<label for="phone" class="mt-3">Phone:</label>
+<input type="text" name="phone" class="form-control" id="phone" placeholder="Enter number">
+
+<label for="tax" class="mt-3">Tax:</label>
+<input type="text" name="tax" class="form-control" id="tax" placeholder="Enter tax number">
+
+<label style="font-weight:lighter;">Profile Image:</label>
+<input type="file" name="image" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 2px solid #ccc;">
+
+        </div>
+      </div>
+
+      <div class="form-check mt-3">
+        <input type="checkbox" class="form-check-input" id="terms" required>
+        <label class="form-check-label" for="terms">
+          By clicking you accept the <a href="#">Terms & Conditions</a>
+        </label>
+      </div>
+
+      <center><button type="submit" class="btn btn-primary mt-3">Submit</button></center>
+
+      <div class="container signin mt-3">
+        <center>
+          <p>Already have an account? <a href="{% url 'custom_login' %}">Sign in</a>.</p>
+        </center>
+      </div>
+    </form>
+  </div>
+
+</body>
+</html>

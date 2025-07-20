@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="height: 80vh; background: linear-gradient(135deg, #e0f7fa, #ffffff);">
+  <div class="text-center p-5 shadow-lg rounded-4" style="max-width: 450px; background-color: white;">
+    <img src="{% static 'images/user.png' %}" alt="User Avatar" class="mb-3" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+    <h3 class="mb-3">👋 Welcome, {{ user.firstname }} {{ user.lastname }}</h3>
+    <p class="text-muted">We're glad to have you here!</p>
+    <hr class="my-4">
+    
+    <p><strong>{{ user.email }}</strong></p>
+    <a href="{% url 'staff_dashboard' %}" class="btn btn-primary mt-3">Go to Dashboard</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <style>
+      .navbar {
+        background-color: darkblue;
+        color: white;
+        padding: 10px;
+      }
+     
+      .bg {
+        background-color: rgb(202, 219, 225);
+      }
+
+      .container-box {
+        padding: 20px;
+        width: 35%;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        margin-top: 50px;
+      }
+
+      input[type=text] {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 2px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+        font-size: 16px;
+      }
+      
+      button {
+        background-color: darkblue;
+        color: white;
+        padding: 14px;
+        margin-top: 10px;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        font-size: 16px;
+        border-radius: 5px;
+      }
+      
+      button:hover {
+        opacity: 0.9;
+      }
+
+      .alert-container {
+        text-align: center;
+        margin-top: 20px;
+      }
+
+      /* Responsive Design */
+      @media screen and (max-width: 768px) {
+        .container-box {
+          width: 80%;
+        }
+      }
+    </style>
+    <title>Verify Email</title>
+</head>
+<body class="bg">
+ 
+    <nav class="navbar navbar">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <h3 class="text-white">Email Verification</h3>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Django Messages as Alerts -->
+    {% if messages %}
+    <div class="alert-container">
+        {% for message in messages %}
+        <div class="alert alert-info">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Email Verification Form -->
+    <div class="container container-box">
+        <h2>Verify Your Email</h2>
+        <p>A verification code was sent to <strong>{{ email }}</strong>. Please enter it below:</p>
+
+        <form action="" method="post">
+            {% csrf_token %}
+            <input type="text" name="verification_code" placeholder="Enter Code" required>
+            <button type="submit">Verify</button>
+        </form>
+    </div>
+
+</body>
+</html>

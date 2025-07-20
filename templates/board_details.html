@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<div class="container-fluid p-0 board-background board-{{ board.template }}">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">{{ board.name }}</h2>
+    <div>
+      <a href="{% url 'pipeline' %}" class="btn btn-secondary btn-sm">
+        ← Back to Pipeline
+      </a>
+    </div>
+    
+  </div>
+  
+
+  <div class="row row-cols-auto g-3 flex-nowrap overflow-auto pb-2" id="column-container" data-board-id="{{ board.id }}">
+    {% for column in columns %}
+      <div class="col" data-column-id="{{ column.id }}">
+        <div class="card shadow-sm border-0" style="min-width: 250px; background-color: {{ column.color|default:'#f1f1f1' }};">
+          <div class="card-body">
+            <!-- Column Title with Colored Border -->
+            <h5 class="card-title mb-2 column-header 
+            {% if column.color %}custom-color{% else %}default-color{% endif %}">
+      {{ column.name }}
+  </h5>
+
+            <!-- Cards -->
+            <div id="cards-{{ column.id }}">
+              {% for card in column.cards.all %}
+              <div class="card mb-2 p-2 bg-white border rounded" 
+              data-card-id="{{ card.id }}" 
+              onclick="openCardModal({{ card.id }})" 
+              style="cursor: pointer;">
+           {{ card.title }}
+         </div>
+         
+
+              {% empty %}
+                <div class="text-muted small"></div>
+              {% endfor %}
+            </div>
+
+            <!-- Add Card Form -->
+            <div id="add-card-form-{{ column.id }}" style="display:none; margin-top:10px;">
+              <input type="text" id="card-title-{{ column.id }}" class="form-control form-control-sm w-100" placeholder="Enter card title...">
+              <button onclick="submitCard({{ column.id }})" class="btn btn-success btn-sm" style="margin-top:5px;">Add Card</button>
+              <button onclick="cancelCard({{ column.id }})" class="btn btn-link btn-sm">Cancel</button>
+            </div>
+
+            <!-- Add Card Button 
+            <div id="add-card-button-{{ column.id }}" class="mt-2">
+              <a href="javascript:void(0);" onclick="showCardForm({{ column.id }})" class="text-decoration-none text-dark">
+                + Add a card
+              </a>
+            </div>-->
+<!-- Add Card Button - Redirect to createlead -->
+<div class="mt-2">
+  <a href="{% url 'create_lead' %}?board_id={{ board.id }}&column_id={{ column.id }}">➕ Add a card</a>
+
+
+
+    
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+    <!-- Add column input -->
+    <div class="col">
+      <div class="card shadow-sm border-0" style="min-width: 250px; background-color: #f8f9fa;">
+        <div class="card-body p-2">
+          <input type="text" id="new-column-input" class="form-control form-control-sm" placeholder="+Add">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Card Details Modal -->
+<div class="modal fade" id="cardDetailModal" tabindex="-1" role="dialog" aria-labelledby="cardDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document" style="margin-top:80px;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cardDetailModalLabel">Card Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="cardDetailContent">
+        <!-- Content loaded via AJAX -->
+        <div class="text-center">Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- JS -->
+<script>
+function showCardForm(columnId) {
+  document.getElementById('add-card-button-' + columnId).style.display = 'none';
+  document.getElementById('add-card-form-' + columnId).style.display = 'block';
+}
+
+function cancelCard(columnId) {
+  document.getElementById('add-card-form-' + columnId).style.display = 'none';
+  document.getElementById('add-card-button-' + columnId).style.display = 'block';
+  document.getElementById('card-title-' + columnId).value = '';
+}
+
+function submitCard(columnId) {
+  const title = document.getElementById('card-title-' + columnId).value.trim();
+  if (!title) return;
+
+  fetch(`/ajax/add_card/${columnId}/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({ title })
+  }).then(response => response.json()).then(data => {
+    if (data.success) {
+      const cardHTML = `<div class="card mb-2 p-2 bg-white border rounded">${data.title}</div>`;
+      document.getElementById('cards-' + columnId).insertAdjacentHTML('beforeend', cardHTML);
+      cancelCard(columnId);
+    } else {
+      alert("Failed to add card.");
+    }
+  });
+}
+
+// Add column handler
+document.getElementById('new-column-input').addEventListener('keypress', function (e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const name = this.value.trim();
+    if (!name) return;
+
+    const boardId = document.getElementById('column-container').dataset.boardId;
+    fetch(`/ajax/add_column/${boardId}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({ name })
+    }).then(res => res.json()).then(data => {
+      if (data.success) {
+        location.reload(); // Or inject new column DOM like above
+      }
+    });
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  const columnContainers = document.querySelectorAll('[id^="cards-"]');
+
+  columnContainers.forEach(container => {
+    new Sortable(container, {
+      group: 'shared',
+      animation: 150,
+      onEnd: function (evt) {
+        const cardId = evt.item.dataset.cardId;
+        const newColumnId = evt.to.id.split('-')[1];
+
+        // Optional: Send updated position to backend
+        fetch('/ajax/move_card/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({
+            card_id: cardId,
+            new_column_id: newColumnId
+          })
+        }).then(res => res.json()).then(data => {
+          if (!data.success) {
+            alert('card moved successfully.');
+          }
+        });
+      }
+    });
+  });
+});
+
+//open card
+function openCardModal(cardId) {
+  // Show the modal first
+  const modal = new bootstrap.Modal(document.getElementById('cardDetailModal'));
+  modal.show();
+
+  // Show loading state in modal body
+  document.getElementById('cardDetailContent').innerHTML = '<div class="text-center">Loading...</div>';
+
+  // Fetch card details from the backend using Ajax
+  fetch(`/ajax/card_detail/${cardId}/`)
+    .then(response => response.text())  // Expecting HTML content
+    .then(html => {
+      // Insert the fetched content into the modal body
+      document.getElementById('cardDetailContent').innerHTML = html;
+    })
+    .catch(() => {
+      // If fetching fails, show an error message
+      document.getElementById('cardDetailContent').innerHTML = '<div class="text-danger">Failed to load card details.</div>';
+    });
+}
+</script>
+<style>
+  .column-header {
+    padding: 5px;
+    border: 3px solid;
+    border-radius: 5px;
+    color: #fff;  /* White text */
+    font-weight: bold;
+    text-align: center;
+}
+
+.column-header.default-color {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.column-header.custom-color {
+    background-color:rgb(176, 210, 223); /* Example color */
+    border-color: rgb(176, 208, 220); /* Example color */
+}
+</style>
+
+{% endblock %}

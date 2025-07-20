@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/kanban.css' %}">
+<!-- CKEditor -->
+<script src="https://cdn.ckeditor.com/4.20.0/standard/ckeditor.js"></script>
+
+
+
+<div class="kanban-board">
+  {% for status_key, status_label in statuses %}
+  <div class="kanban-column" data-status="{{ status_key }}">
+      <h3>{{ status_label }}</h3>
+      <div class="kanban-cards">
+          {% if status_key == "new" %}
+              <!-- Add Lead button only for the 'New' column, placed at the top -->
+              <div class="add-lead-card" style="background-color:#97b8cb;" onclick="window.location.href='{% url 'createlead' %}?status={{ status_key }}'">
+                  + Add Lead
+              </div>
+          {% endif %}
+          {% for lead in leads %}
+              {% if lead.status == status_key %}
+              <div class="lead-card" data-lead-id="{{ lead.id }}" draggable="true">
+                {{ lead.firstname }} {{ lead.lastname }}
+            </div>
+              {% endif %}
+          {% endfor %}
+      </div>
+  </div>
+  {% endfor %}
+</div>
+<!-- Lead Details Container -->
+<div id="leadDetailsContainer" class="lead-details-container" style="display: none; width: 80%; height: 100vh;">
+
+    <!-- Left Side: Tabs & Content -->
+    <div style="flex: 2; padding: 10px; overflow-y: auto;border-radius:5px;" class="lead-details-left">
+
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs">
+            <li class="nav-item active">
+                <a class="nav-link" href="#descriptionTab" data-toggle="tab">Description</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#invoiceTab" data-toggle="tab">Estimate</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#appointmentsTab" data-toggle="tab">Invoice</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#dealTab" data-toggle="tab">Deal</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#projectsTab" data-toggle="tab">Projects</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#meetingsTab" data-toggle="tab">Meetings</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#filesTab" data-toggle="tab">Files</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#financialTab" data-toggle="tab">Financial</a>
+            </li>
+        </ul>
+        
+        <!-- Tabs Content -->
+        <div class="tab-content">
+            <div class="tab-pane fade in active" id="descriptionTab">
+                <div class="form-group text-left">
+                    <label for="leadDescription">Description</label>
+                    <textarea id="leadEditor"></textarea>
+                  
+                </div>
+                <div class="form-group text-left">
+                    <button type="button" class="btn btn-sm btn-primary" id="saveLead">Save</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="closeLeadForm()">Close</button>
+                </div>
+                <div class="form-group text-left">
+                    <label for="leadDescription">Activity</label><br>
+                   <input type="text" name="acticity">
+                  
+                </div>
+            </div>
+            <div class="tab-pane fade" id="invoiceTab">
+                <h4>Invoice Details</h4>
+                <p>Invoice details will be shown here.</p>
+            </div>
+            <div class="tab-pane fade" id="appointmentsTab">
+                <h4>Appointments</h4>
+                <p>Appointment details go here.</p>
+            </div>
+            <div class="tab-pane fade" id="dealTab">
+                <h4>Deal Information</h4>
+                <p>Details about the deal will be shown here.</p>
+            </div>
+            <div class="tab-pane fade" id="meetingsTab">
+                <h4>Meetings</h4>
+                <p>Meeting schedules and notes.</p>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+       
+    </div>
+
+    <!-- Right Side: Actions Panel -->
+    <div style="flex: 0.5; width: 250px; padding: 10px; border-left: 2px solid #ddd; background: #f9f9f9; border-radius:5px;" class="lead-details-right">
+        <h4></h4>
+        <button class="btn btn-sm btn-primary btn-block" onclick="callLead()">📞 Call</button>
+        <button class="btn btn-sm btn-success btn-block" onclick="whatsappLead()">💬 WhatsApp</button>
+        <button class="btn btn-sm btn-info btn-block" onclick="emailLead()">📧 Email</button>
+    </div>
+    
+</div>
+<script src="{% static 'js/dragdrop.js' %}"></script>
+<script src="{% static 'js/leadviewonCKEditor.js' %}"></script>   
+
+{% endblock %}
+
+
+
+

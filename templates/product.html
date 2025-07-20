@@ -1,0 +1,1206 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="container mt-5">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-primary mb-0">📦 Product Management</h2>
+    <a href="{% url 'client_dashboard' %}" class="btn btn-outline-secondary">
+      &larr; Back to Leads
+    </a>
+  </div>
+
+  <!-- Filters and Add Product Button -->
+  <div class="row g-3 align-items-end mb-4">
+    <!-- Product Type Filter -->
+    <div class="col-md-3">
+      <label for="productTypeFilter" class="form-label fw-semibold">Filter by Type</label>
+      <select class="form-select shadow-sm" id="productTypeFilter" onchange="filterProducts()">
+        <option value="">🔎 Select Type</option>
+        <option value="all">All</option>
+        <option value="physical">Physical</option>
+        <option value="digital">Digital</option>
+        <option value="course">Course</option>
+        <option value="service">Service</option>
+      </select>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="col-md-4">
+      <label for="categoryFilter" class="form-label fw-semibold">Filter by Category</label>
+      <select class="form-select shadow-sm" id="categoryFilter" onchange="filterProducts()">
+        <option value="">🔎 Select Category</option>
+        <option value="all">All</option>
+        <optgroup label="📦 Physical Categories">
+          {% for cat in physical_categories %}
+            <option value="physical:{{ cat.name }}">{{ cat.name }}</option>
+          {% endfor %}
+        </optgroup>
+        <optgroup label="💻 Digital Categories">
+          {% for cat in digital_categories %}
+            <option value="digital:{{ cat.name }}">{{ cat.name }}</option>
+          {% endfor %}
+        </optgroup>
+        <optgroup label="🎓 Course Categories">
+          {% for cat in course_categories %}
+            <option value="course:{{ cat.name }}">{{ cat.name }}</option>
+          {% endfor %}
+        </optgroup>
+        <optgroup label="🛠️ Service Categories">
+          {% for cat in service_categories %}
+            <option value="service:{{ cat.name }}">{{ cat.name }}</option>
+          {% endfor %}
+        </optgroup>
+      </select>
+    </div>
+
+    <!-- Add Product Button -->
+    <div class="col-md-2 ms-auto text-end">
+      <label class="invisible d-block">Add Product</label> <!-- Keeps spacing consistent -->
+      <button class="btn btn-success w-100 shadow-sm" data-bs-toggle="modal" data-bs-target="#productModal">
+        + Add Product
+      </button>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+  <!-- ✅ Product Table -->
+<div class="card shadow border-0">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-striped align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="text-center">#</th>
+            <th class="text-center">Image</th>
+            <th class="text-center">Name</th>
+            <th class="text-center">Category</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+          <tr data-type="{{ product.type|lower }}" data-category="{{ product.category_name|lower }}">
+            <td class="text-center">{{ forloop.counter }}</td>
+
+            <td class="text-center">
+              {% if product.image %}
+                <img src="{{ product.image.url }}" alt="Image" style="height: 50px; width: 50px; object-fit: cover; border-radius: 5px;">
+              {% else %}
+                <span class="text-muted">No Image</span>
+              {% endif %}
+            </td>
+
+            <td class="text-center">{{ product.name }}</td>
+            <td class="text-center">{{ product.category_name }}</td>
+
+            <td class="text-center">
+              <!-- View Button -->
+              <button
+                class="btn btn-sm btn-info me-1"
+                onclick='openViewModal({
+                  id: "{{ product.id }}",
+                  type: "{{ product.type }}",
+                  name: "{{ product.name|escapejs }}",
+                  category_name: "{{ product.category_name|escapejs }}",
+                  price: "{{ product.price|default:"" }}",
+                  quantity: "{{ product.quantity|default:"" }}",
+                  description: "{{ product.description|default:""|escapejs }}",
+                  image: "{% if product.image %}{{ product.image.url }}{% endif %}"
+                })'
+              >
+                View
+              </button>
+
+              <!-- Edit Button -->
+              <button
+                class="btn btn-sm btn-primary me-1"
+                onclick='openEditModal({
+                  id: "{{ product.id }}",
+                  name: "{{ product.name|escapejs }}",
+                  category: "{{ product.category_name|escapejs }}",
+                  price: "{{ product.price|default:"" }}",
+                  quantity: "{{ product.quantity|default:"" }}",
+                  description: "{{ product.description|default:""|escapejs }}",
+                  type: "{{ product.type }}"
+                })'
+              >
+                Edit
+              </button>
+
+              <!-- Delete Form -->
+              <form
+                id="delete-form-{{ product.id }}"
+                action="{% url 'delete_product' product.id product.type %}"
+                method="post"
+                style="display:inline;"
+              >
+                {% csrf_token %}
+                <button
+                  type="button"
+                  class="btn btn-sm btn-danger"
+                  onclick="if (confirm('Are you sure you want to delete &quot;{{ product.name }}&quot;?')) {
+                    document.getElementById('delete-form-{{ product.id }}').submit();
+                  }"
+                >
+                  Delete
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">No products found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+   <!-- Pagination Controls -->
+<div class="d-flex justify-content-center mt-4">
+  <nav>
+    <ul class="pagination">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">« Prev</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">« Prev</span>
+        </li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next »</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Next »</span>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+
+
+
+    </div>
+  </div>
+</div>
+
+
+<!-- Product Type Modal -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+  <div class="modal-dialog" style="margin-top: 80px;">
+    <div class="modal-content rounded-3">
+      <div class="modal-header">
+        <h5 class="modal-title">Select Product Type</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <button class="btn btn-outline-primary m-2" onclick="showForm('physical')">Physical Product</button>
+        <button class="btn btn-outline-success m-2" onclick="showForm('digital')">Digital Product</button>
+        <button class="btn btn-outline-warning m-2" onclick="showForm('course')">Course</button>
+        <button class="btn btn-outline-info m-2" onclick="showForm('service')">Service</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- PHYSICAL Product Modal -->
+<div class="modal fade" id="physicalFormModal" tabindex="-1">
+  <div class="modal-dialog modal-lg" style="margin-top: 80px;">
+    <div class="modal-content" style="background-color: #cce5ff; color: #0c5460;">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Physical Product</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form id="physicalForm" onsubmit="event.preventDefault(); submitForm('physicalForm', '{% url 'save_physical' %}');" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Product Name</label>
+              <input type="text" name="name" class="form-control" style="width:100%;" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Price (₹)</label>
+              <input type="number" name="price" class="form-control" style="width:100%;" required>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Image</label>
+              <input type="file" name="image" class="form-control" style="width:100%;" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Quantity</label>
+              <input type="number" name="quantity" class="form-control" style="width:100%;" required>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Category</label>
+              
+        <select id="categorySelect_physical" name="category" class="form-select" required>
+  <option value="">Select Category</option>
+  {% for category in physical_categories %}
+    <option value="{{ category.id }}">{{ category.name }}</option>
+  {% endfor %}
+</select>
+
+  <a href="#" data-bs-toggle="modal" data-bs-target="#addCategoryModal_physical" style="text-decoration: none; cursor: pointer;">
+  + Add new category
+</a>
+
+               
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control ckeditor" style="width:100%;" rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-primary" type="submit">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- DIGITAL Product Modal -->
+<div class="modal fade" id="digitalFormModal" tabindex="-1">
+  <div class="modal-dialog modal-lg" style="margin-top: 80px;">
+    <div class="modal-content" style="background-color: #cce5ff; color: #0c5460;">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Digital Product</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form id="digitalForm" onsubmit="event.preventDefault(); submitForm('digitalForm', '{% url 'save_digital' %}');" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Product Name</label>
+              <input type="text" name="name" class="form-control" style="width:100%;" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Price (₹)</label>
+              <input type="number" name="price" class="form-control" style="width:100%;" required>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Image</label>
+              <input type="file" name="image" class="form-control" style="width:100%;" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Quantity</label>
+              <input type="number" name="quantity" class="form-control" style="width:100%;" required>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Category</label>
+              
+                                   <select id="categorySelect_digital" name="category" class="form-select" required>
+      <option value="">Select Category</option>
+      {% for category in digital_categories %}
+        <option value="{{ category.id }}">{{ category.name }}</option>
+      {% endfor %}
+    </select>
+  <a href="#" data-bs-toggle="modal" data-bs-target="#addCategoryModal_digital" style="text-decoration: none; cursor: pointer;">
+  + Add new category
+</a>
+
+            </div>
+          </div>
+
+           <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control ckeditor" style="width:100%;" rows="3"></textarea>
+          </div>
+        </div>
+       
+
+        <div class="modal-footer">
+          <button class="btn btn-success" type="submit">Save Product</button>
+        </div>
+      </form>
+    </div>
+     </div>
+  </div>
+</div>
+<!-- COURSE Product Modal -->
+<div class="modal fade" id="courseFormModal" tabindex="-1">
+  <div class="modal-dialog modal-lg" style="margin-top: 80px;">
+    <div class="modal-content" style="background-color: #cce5ff; color: #0c5460;">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Course</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form id="courseForm" onsubmit="event.preventDefault(); submitForm('courseForm', '{% url 'save_course' %}');" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Course Name</label>
+              <input type="text" name="name" class="form-control" style="width:100%;" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Duration</label>
+              <input type="text" name="duration" class="form-control" style="width:100%;" required>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Fees (₹)</label>
+              <input type="number" name="fees" class="form-control" style="width:100%;" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Category</label>
+                                 <select id="categorySelect_course" name="category" class="form-select" required>
+      <option value="">Select Category</option>
+      {% for category in course_categories %}
+        <option value="{{ category.id }}">{{ category.name }}</option>
+      {% endfor %}
+    </select>
+   <a href="#" data-bs-toggle="modal" data-bs-target="#addCategoryModal_course" style="text-decoration: none; cursor: pointer;">
+  + Add new category
+</a>
+
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Image</label>
+              <input type="file" name="image" class="form-control" style="width: 100%;">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Description</label>
+              <textarea name="description" class="form-control ckeditor" style="width: 100%;" rows="3" placeholder="Enter course description..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-warning" type="submit">Save Course</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- SERVICE Modal -->
+<div class="modal fade" id="serviceFormModal" tabindex="-1">
+  <div class="modal-dialog modal-lg" style="margin-top: 80px;">
+    <div class="modal-content" style="background-color: #cce5ff; color: #0c5460;">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Service</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form id="serviceForm" onsubmit="event.preventDefault(); submitForm('serviceForm', '{% url 'save_service' %}');">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Service Name</label>
+              <input type="text" name="name" class="form-control" style="width:100%;" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Category</label>
+             
+                                 <select id="categorySelect_service" name="category" class="form-select" required>
+      <option value="">Select Category</option>
+      {% for category in service_categories %}
+        <option value="{{ category.id }}">{{ category.name }}</option>
+      {% endfor %}
+    </select>
+   <a href="#" data-bs-toggle="modal" data-bs-target="#addCategoryModal_service" style="text-decoration: none; cursor: pointer;">
+  + Add new category
+</a>
+
+
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-info" type="submit">Save Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!--EDIT SECTION-->
+<!-- ✅ Edit Physical Product Modal -->
+<div class="modal fade" id="editPhysicalModal" tabindex="-1">
+  <div class="modal-dialog modal-lg" style="margin-top: 100px;">
+    <div class="modal-content" >
+      <form id="editPhysicalForm" method="POST" action="{% url 'update_physical' %}" enctype="multipart/form-data">
+
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Physical Product</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="edit-physical-id">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label>Name</label>
+              <input type="text" class="form-control"  style="width:100%;"  name="name" id="edit-physical-name">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label>Price</label>
+              <input type="number" class="form-control"  style="width:100%;" name="price" id="edit-physical-price">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label>Quantity</label>
+              <input type="number" class="form-control"   style="width:100%;"  name="quantity" id="edit-physical-quantity">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label>Category</label>
+                 <select id="edit-physical-category" name="category" class="form-select" required>
+      <option value="">Select Category</option>
+      {% for category in physical_categories %}
+        <option value="{{ category.id }}">{{ category.name }}</option>
+      {% endfor %}
+    </select>
+     
+  
+
+  
+            </div>
+            
+            
+            <div class="mb-3">
+              <label>Description</label>
+              <textarea class="form-control ckeditor" style="width:100%;"   name="description" id="edit-physical-description"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ✅ Edit Digital Product Modal -->
+<div class="modal fade" id="editDigitalModal" tabindex="-1">
+  <div class="modal-dialog modal-lg" style="margin-top: 100px;" >
+    <div class="modal-content">
+      <form id="editDigitalForm" method="POST" action="{% url 'update_digital' %}" enctype="multipart/form-data">
+
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Digital Product</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="edit-digital-id">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label>Name</label>
+              <input type="text" class="form-control" style="width:100%;" name="name" id="edit-digital-name">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label>Price</label>
+              <input type="number" class="form-control" style="width:100%;" name="price" id="edit-digital-price">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label>Quantity</label>
+              <input type="number" class="form-control"style="width:100%;" name="quantity" id="edit-digital-quantity">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label>Category</label>
+                                 <select id="edit-digital-category" name="category" class="form-select" required>
+      <option value="">Select Category</option>
+      {% for category in digital_categories %}
+        <option value="{{ category.name }}">{{ category.name }}</option>
+      {% endfor %}
+    </select>
+             
+            </div>
+            <div class="mb-3">
+              <label>Description</label>
+              <textarea class="form-control ckeditor" style="width:100%;"  name="description" id="edit-digital-description"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ✅ Edit Course Modal -->
+<div class="modal fade" id="editCourseModal" tabindex="-1">
+  <div class="modal-dialog modal-lg" style="margin-top: 100px;">
+    <div class="modal-content">
+      <form id="editCourseForm" method="POST" action="{% url 'update_course' %}" enctype="multipart/form-data">
+
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Course</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="edit-course-id">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label>Name</label>
+              <input type="text" class="form-control" style="width:100%;" name="name" id="edit-course-name">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label>Fees</label>
+              <input type="number" class="form-control" style="width:100%;"  name="fees" id="edit-course-fees">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label>Category</label>
+                                 <select id="edit-course-category" name="category" class="form-select" required>
+      <option value="">Select Category</option>
+      {% for category in course_categories %}
+        <option value="{{ category.name }}">{{ category.name }}</option>
+      {% endfor %}
+    </select>
+              
+            </div>
+            <div class="col-md-6 mb-3">
+              <label>Description</label>
+              <textarea class="form-control ckeditor"  style="width:100%;"  name="description" id="edit-course-description"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-warning">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ✅ Edit Service Modal -->
+<div class="modal fade" id="editServiceModal" tabindex="-1">
+  <div class="modal-dialog modal-lg" style="margin-top: 100px;">
+    <div class="modal-content">
+      <form id="editServiceForm" method="POST" action="{% url 'update_service' %}" enctype="multipart/form-data">
+
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Service</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="edit-service-id">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label>Name</label>
+              <input type="text" class="form-control" style="width:100%;" name="name" id="edit-service-name">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label>Category</label>
+                                 <select id="edit-service-category" name="category" class="form-select" required>
+      <option value="">Select Category</option>
+      {% for category in service_categories %}
+        <option value="{{ category.name }}">{{ category.name }}</option>
+      {% endfor %}
+    </select>
+              
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-info">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!--VIEW MODALS-->
+<!-- View Product Modal -->
+<div class="modal fade" id="viewProductModal" tabindex="-1" aria-labelledby="viewProductModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" style="margin-top:80px;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewProductModalLabel">Product Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Image -->
+        <div id="view-image-container" class="text-center mb-3" style="display:none;">
+          <img id="view-image" src="" alt="Product Image"
+               style="max-height:200px; max-width:100%; object-fit:cover; border-radius:5px;">
+        </div>
+
+        <!-- Common fields -->
+        <dl class="row">
+          <dt class="col-sm-4">Name</dt>
+          <dd class="col-sm-8" id="view-name"></dd>
+
+          <dt class="col-sm-4">Category</dt>
+          <dd class="col-sm-8" id="view-category"></dd>
+
+          <!-- Price (physical & digital) or Fees (course) -->
+          <dt class="col-sm-4" id="view-price-label">Price</dt>
+          <dd class="col-sm-8" id="view-price"></dd>
+
+          <!-- Quantity (physical & digital) -->
+          <dt class="col-sm-4" id="view-qty-label">Quantity</dt>
+          <dd class="col-sm-8" id="view-quantity"></dd>
+
+          <!-- Description (physical & course) -->
+          <dt class="col-sm-4" id="view-desc-label">Description</dt>
+          <dd class="col-sm-8" id="view-description"></dd>
+        </dl>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+<!-- Add Physical Category Modal -->
+<div class="modal fade" id="addCategoryModal_physical" tabindex="-1" aria-labelledby="addCategoryModalLabel_physical" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="addCategoryForm_physical" onsubmit="event.preventDefault(); submitCategoryForm('physical');">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCategoryModalLabel_physical">Add Physical Category</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label for="newCategoryName_physical" class="form-label">Category Name</label>
+          <input type="text" id="newCategoryName_physical" name="name" class="form-control" style="width:100%;" required>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" type="submit">Add Category</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!--ADD DIGITAL CATEGORY MODAL-->
+<div class="modal fade" id="addCategoryModal_digital" tabindex="-1" aria-labelledby="addCategoryModalLabel_digital" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="addCategoryForm_digital" onsubmit="event.preventDefault(); submitCategoryForm('digital');">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCategoryModalLabel_digital">Add Digital Category</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label for="newCategoryName_digital" class="form-label">Category Name</label>
+          <input type="text" id="newCategoryName_digital" name="name" class="form-control" style="width:100%;" required>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" type="submit">Add Category</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+
+<!--ADD COURSE CATEGORY MODAL-->
+<div class="modal fade" id="addCategoryModal_course" tabindex="-1" aria-labelledby="addCategoryModalLabel_course" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="addCategoryForm_course" onsubmit="event.preventDefault(); submitCategoryForm('course');">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCategoryModalLabel_course">Add Course Category</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label for="newCategoryName_course" class="form-label">Category Name</label>
+          <input type="text" id="newCategoryName_course" name="name" class="form-control" style="width:100%;" required>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" type="submit">Add Category</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!--ADD SERVICE CATEGORY MODAL-->
+<div class="modal fade" id="addCategoryModal_service" tabindex="-1" aria-labelledby="addCategoryModalLabel_service" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="addCategoryForm_service" onsubmit="event.preventDefault(); submitCategoryForm('service');">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCategoryModalLabel_service">Add Service Category</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label for="newCategoryName_service" class="form-label">Category Name</label>
+          <input type="text" id="newCategoryName_service" name="name" class="form-control" style="width:100%;" required>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" type="submit">Add Category</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+
+<div
+  id="success-message"
+  class="alert alert-success"
+  role="alert"
+  style="
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    min-width: 250px;
+  "
+></div>
+
+
+<!--success message of edit forms-->
+<script>
+// 1️⃣ Get CSRF token from cookie
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    document.cookie.split(';').forEach(cookie => {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+      }
+    });
+  }
+  return cookieValue;
+}
+
+// 2️⃣ Show success message in fixed alert div
+function showSuccessMessage(msg) {
+  const msgDiv = document.getElementById('success-message');
+  if (!msgDiv) return;
+  msgDiv.textContent = msg;
+  msgDiv.style.display = 'block';
+  // Auto‑hide after 3 seconds
+  setTimeout(() => (msgDiv.style.display = 'none'), 3000);
+}
+
+// 3️⃣ Core: hook up a form for AJAX update + success alert
+function submitEditForm(formId, endpointUrl) {
+  const form = document.getElementById(formId);
+  if (!form) return;
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+    const csrftoken = getCookie('csrftoken');
+
+    fetch(endpointUrl, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken },
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // ⏹️ Close the Bootstrap modal containing this form
+        const modalEl = form.closest('.modal');
+        if (modalEl) {
+          const bsModal = bootstrap.Modal.getInstance(modalEl);
+          if (bsModal) bsModal.hide();
+        }
+        // 🚀 Show the success message
+  alert(data.message);
+        // (Optional) Here you could also update the table row in-place instead of reloading
+      } else {
+        alert('Update failed: ' + (data.message || 'Unknown error'));
+      }
+    })
+    .catch(() => {
+      alert('Network error—please try again.');
+    });
+  });
+}
+
+// 4️⃣ On DOM ready, wire up all four edit forms
+document.addEventListener('DOMContentLoaded', function () {
+  submitEditForm('editPhysicalForm', '{% url "update_physical" %}');
+  submitEditForm('editDigitalForm',  '{% url "update_digital"  %}');
+  submitEditForm('editCourseForm',   '{% url "update_course"   %}');
+  submitEditForm('editServiceForm',  '{% url "update_service"  %}');
+});
+</script>
+
+
+
+
+<!--modal forms show-->
+<script>
+function showForm(type) {
+  // Hide product type selection modal
+  const typeModal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
+  typeModal.hide();
+
+  // Show the selected form modal
+  const modalId = type + 'FormModal';
+  const targetModal = new bootstrap.Modal(document.getElementById(modalId));
+  targetModal.show();
+}
+</script>
+
+
+
+<!--Filter-->
+<script>
+function filterProducts() {
+  const selectedType = document.getElementById("productTypeFilter").value.toLowerCase();  // e.g. "physical" or "all"
+  const selectedCategoryRaw = document.getElementById("categoryFilter").value;            // e.g. "physical:Electronics"
+
+  let selectedCategoryType = "";
+  let selectedCategoryName = "";
+
+  if (selectedCategoryRaw && selectedCategoryRaw !== "all") {
+    const parts = selectedCategoryRaw.split(":");
+    selectedCategoryType = parts[0].toLowerCase();
+    selectedCategoryName = parts[1].toLowerCase();
+  }
+
+  const rows = document.querySelectorAll("tbody tr");
+
+  rows.forEach(row => {
+    const rowType = row.getAttribute("data-type").toLowerCase();
+    const rowCategory = row.getAttribute("data-category").toLowerCase();
+
+    const matchesType = (selectedType === "all" || !selectedType || rowType === selectedType);
+    
+    const matchesCategory =
+      selectedCategoryRaw === "all" ||
+      !selectedCategoryRaw ||
+      (rowType === selectedCategoryType && rowCategory === selectedCategoryName);
+
+    row.style.display = (matchesType && matchesCategory) ? "" : "none";
+  });
+}
+</script>
+
+
+
+<!--SCRIPT FOR OPEN EDIT MODAL-->
+<script>
+function openEditModal(product) {
+  if (product.type === 'physical') {
+    document.getElementById('edit-physical-id').value = product.id;
+    document.getElementById('edit-physical-name').value = product.name;
+    document.getElementById('edit-physical-category').value = product.category;
+    document.getElementById('edit-physical-price').value = product.price;
+    document.getElementById('edit-physical-quantity').value = product.quantity;
+
+    // ✅ Set CKEditor content
+    const editor = ckeditors['edit-physical-description'];
+    if (editor) {
+      editor.setData(product.description || '');
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('editPhysicalModal'));
+    modal.show();
+  }
+
+  if (product.type === 'digital') {
+    document.getElementById('edit-digital-id').value = product.id;
+    document.getElementById('edit-digital-name').value = product.name;
+    document.getElementById('edit-digital-category').value = product.category;
+    document.getElementById('edit-digital-price').value = product.price;
+    document.getElementById('edit-digital-quantity').value = product.quantity;
+
+    // ✅ Set CKEditor content
+    const editor = ckeditors['edit-digital-description'];
+    if (editor) {
+      editor.setData(product.description || '');
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('editDigitalModal'));
+    modal.show();
+  }
+
+  if (product.type === 'course') {
+    document.getElementById('edit-course-id').value = product.id;
+    document.getElementById('edit-course-name').value = product.name;
+    document.getElementById('edit-course-category').value = product.category;
+    document.getElementById('edit-course-fees').value = product.price;
+
+    // ✅ Set CKEditor content
+    const editor = ckeditors['edit-course-description'];
+    if (editor) {
+      editor.setData(product.description || '');
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('editCourseModal'));
+    modal.show();
+  }
+
+  if (product.type === 'service') {
+    document.getElementById('edit-service-id').value = product.id;
+    document.getElementById('edit-service-name').value = product.name;
+    document.getElementById('edit-service-category').value = product.category;
+
+    // ✅ Set CKEditor content
+    const editor = ckeditors['edit-service-description'];
+    if (editor) {
+      editor.setData(product.description || '');
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('editServiceModal'));
+    modal.show();
+  }
+}
+</script>
+
+
+<!--VIEW MODALS SCRIPT-->
+<script>
+function openViewModal(product) {
+  // 1) Image
+  const imgContainer = document.getElementById('view-image-container');
+  const imgEl = document.getElementById('view-image');
+  if (product.image) {
+    imgEl.src = product.image;
+    imgContainer.style.display = 'block';
+  } else {
+    imgContainer.style.display = 'none';
+  }
+
+  // 2) Name & Category
+  document.getElementById('view-name').textContent = product.name || '-';
+  document.getElementById('view-category').textContent = product.category_name || '-';
+
+  // 3) Price / Fees
+  const priceLabel = document.getElementById('view-price-label');
+  const priceDD    = document.getElementById('view-price');
+  if (product.type === 'course') {
+    priceLabel.textContent = 'Fees';
+    priceDD.textContent = product.price || '-';
+  } else if (['physical','digital'].includes(product.type)) {
+    priceLabel.textContent = 'Price';
+    priceDD.textContent = product.price != null ? '₹ ' + product.price : '-';
+  } else {
+    priceLabel.style.display = 'none';
+    priceDD.style.display    = 'none';
+  }
+
+  // 4) Quantity
+  const qtyLabel = document.getElementById('view-qty-label');
+  const qtyDD    = document.getElementById('view-quantity');
+  if (product.type === 'physical' || product.type === 'digital') {
+    qtyLabel.style.display = '';
+    qtyDD.style.display    = '';
+    qtyDD.textContent      = product.quantity != null ? product.quantity : '-';
+  } else {
+    qtyLabel.style.display = 'none';
+    qtyDD.style.display    = 'none';
+  }
+
+  // 5) Description
+  const descLabel = document.getElementById('view-desc-label');
+  const descDD    = document.getElementById('view-description');
+  if (product.type === 'physical' || product.type === 'course') {
+    descLabel.style.display = '';
+    descDD.style.display    = '';
+    descDD.textContent      = product.description || '-';
+  } else {
+    descLabel.style.display = 'none';
+    descDD.style.display    = 'none';
+  }
+
+  // Finally, show the modal
+  new bootstrap.Modal(document.getElementById('viewProductModal')).show();
+}
+</script>
+
+
+
+
+
+
+
+
+<!--ADD NEW CATEGORY-->
+<script>
+  function submitCategoryForm(type) {
+  const inputId = `newCategoryName_${type}`;
+  const newCategoryInput = document.getElementById(inputId);
+  const newCategoryName = newCategoryInput.value.trim();
+
+  if (!newCategoryName) {
+    alert('Please enter a category name.');
+    return;
+  }
+
+  fetch("{% url 'add_category_ajax' %}", {  // Your Django URL for ajax add category
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie('csrftoken'),
+    },
+    body: JSON.stringify({ name: newCategoryName, type: type }),
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      // Hide the modal
+      const modalEl = document.getElementById(`addCategoryModal_${type}`);
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+
+      // Add the new category to the corresponding select dropdown
+      const select = document.getElementById(`categorySelect_${type}`);
+      const option = document.createElement('option');
+      option.value = data.category.id;    // assuming backend returns id
+      option.textContent = data.category.name;
+      option.selected = true;
+      select.appendChild(option);
+
+      // Clear input
+      newCategoryInput.value = '';
+
+      alert(`New ${type} category "${data.category.name}" added successfully!`);
+    } else {
+      alert(data.error || 'Failed to add category.');
+    }
+  })
+  .catch(() => alert('Error adding category. Please try again.'));
+}
+
+// CSRF helper (standard)
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+</script>
+
+<script>
+  const ckeditors = {}; // To store instances
+
+  function initCKEditor5(textarea) {
+    const id = textarea.id;
+    if (!id) return;
+
+    if (ckeditors[id]) return; // Already initialized
+
+    ClassicEditor
+      .create(textarea)
+      .then(editor => {
+        ckeditors[id] = editor;
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  }
+
+  // Initialize on page load for visible textareas
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll('textarea.ckeditor').forEach(textarea => {
+      if (!textarea.id) {
+        textarea.id = 'ckeditor-' + Math.random().toString(36).substring(2, 10);
+      }
+      initCKEditor5(textarea);
+    });
+  });
+
+  // Also initialize when modals are shown
+  $('#physicalFormModal, #digitalFormModal, #courseFormModal, #serviceFormModal, #editPhysicalModal, #editDigitalModal, #editCourseModal, #editServiceModal').on('shown.bs.modal', function () {
+    $(this).find('textarea.ckeditor').each(function () {
+      if (!this.id) {
+        this.id = 'ckeditor-' + Math.random().toString(36).substring(2, 10);
+      }
+      initCKEditor5(this);
+    });
+  });
+</script>
+
+
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}

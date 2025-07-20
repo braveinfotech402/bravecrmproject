@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<style>
+/* Layout */
+.wrapper {
+  display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background: white;
+  padding: 20px;
+  position: fixed;
+  top: 120px; /* Adjust this based on your navbar height */
+  left: 20px;
+  overflow-y: auto;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* Content */
+.content {
+  flex: 1;
+  margin-left: 270px; /* Push content right of sidebar */
+  padding: 20px;
+  top: 120px;
+  min-height: calc(100vh - 50px);
+  background: #fff;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  margin-right: 150px;
+  width: calc(100% - 450px); /* Adjust based on sidebar and margin */
+}
+
+/* Menu Items */
+.menu-item {
+  display: block;
+  padding: 10px;
+  cursor: pointer;
+  background: rgb(227, 227, 236);
+  margin: 15px 0;
+  text-align: center;
+  border-radius: 6px;
+  transition: background 0.3s ease;
+}
+
+.menu-item:hover {
+  background: #bbb;
+}
+
+/* Responsive (Optional) */
+@media (max-width: 768px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+  }
+  .content {
+    margin-left: 0;
+    width: 100%;
+    margin-right: 0;
+  }
+}
+</style>
+
+<div class="wrapper">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h3>Settings</h3>
+    <div class="menu-item" hx-get="{% url 'profile' %}" hx-target="#content" hx-swap="innerHTML">Profile</div>
+    <div class="menu-item" hx-get="{% url 'staff_list' %}" hx-target="#content" hx-swap="innerHTML">Staff</div>
+  </div>
+
+  <!-- Content Area -->
+  <div class="content" id="content">
+    <h2>Welcome, {{ request.user.email }}</h2>
+  </div>
+</div>
+
+<!-- HTMX Script -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+{% endblock %}

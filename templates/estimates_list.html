@@ -1,0 +1,41 @@
+<!-- templates/estimates/estimate_list.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">All Estimates</h2>
+  <table class="table table-bordered table-hover">
+    <thead class="thead-dark">
+      <tr>
+        <th>#</th>
+        <th>Estimate No</th>
+        <th>Client</th>
+        <th>Lead</th>
+        <th>Issue Date</th>
+        <th>Expiry</th>
+        <th>Status</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for estimate in estimates %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ estimate.estimate_number }}</td>
+        <td>{{ estimate.client }}</td>
+        <td>{{ estimate.lead }}</td>
+        <td>{{ estimate.issue_date }}</td>
+        <td>{{ estimate.expiry_date }}</td>
+        <td>{{ estimate.get_status_display }}</td>
+        <td>{{ estimate.total }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="8">No estimates found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

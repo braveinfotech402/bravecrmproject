@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lead Details Test</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .lead-card {
+      cursor: pointer;
+      padding: 12px;
+      background-color: #eef;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      width: 250px;
+    }
+  </style>
+</head>
+<body class="p-4">
+
+  <!-- LEAD CARD -->
+  <div class="lead-card" onclick="openLeadDetails(3)">
+    👤 Joel Josh (Lead ID 3)
+  </div>
+
+  <!-- CUSTOMER DETAILS MODAL -->
+  <div class="modal fade" id="createEstimateModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-3">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="modalLabel">Customer Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <ul class="list-unstyled">
+            <li><strong>Name:</strong> <span id="lead-name">--</span></li>
+            <li><strong>Email:</strong> <span id="lead-email">--</span></li>
+            <li><strong>Company:</strong> <span id="lead-company">--</span></li>
+            <li><strong>Address:</strong> <span id="lead-address">--</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOOTSTRAP & SCRIPT -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function openLeadDetails(leadId) {
+      console.log("Fetching lead:", leadId);
+
+      // Simulate a real API call with hardcoded data
+      const simulatedApiResponse = {
+        id: 3,
+        firstname: "Joel",
+        lastname: "Josh",
+        email: "joel@gmail.com",
+        companyname: "Joel Inc",
+        streetaddress: "123 Joel Street",
+        streetnumber: "45",
+        city: "Kochi",
+        state: "Kerala",
+        country: "India",
+        postalcode: "682001"
+      };
+
+      // Fill modal
+      document.getElementById("lead-name").textContent = `${simulatedApiResponse.firstname} ${simulatedApiResponse.lastname}`;
+      document.getElementById("lead-email").textContent = simulatedApiResponse.email;
+      document.getElementById("lead-company").textContent = simulatedApiResponse.companyname;
+      document.getElementById("lead-address").textContent = `${simulatedApiResponse.streetaddress} ${simulatedApiResponse.streetnumber}, ${simulatedApiResponse.city}, ${simulatedApiResponse.state}, ${simulatedApiResponse.country}, ${simulatedApiResponse.postalcode}`;
+
+      // Show modal
+      const modal = new bootstrap.Modal(document.getElementById("createEstimateModal"));
+      modal.show();
+    }
+  </script>
+</body>
+</html>

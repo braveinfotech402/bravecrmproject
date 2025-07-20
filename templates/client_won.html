@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1 class="my-4 text-center">Clients</h1>
+
+    <!-- Filter/ Search Bar (Optional) 
+    <div class="row mb-4">
+        <div class="col-md-6 offset-md-3">
+            <input type="text" class="form-control" id="search-input" placeholder="Search by email..." onkeyup="searchTable()">
+        </div>
+    </div>-->
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover">
+            <thead>
+                <tr class="table-primary">
+                    <th>Email</th>
+                    <th>Won Leads</th>
+                    <th>Created On</th>
+                </tr>
+            </thead>
+            <tbody id="client-table-body">
+                {% for client in clients %}
+                    <tr>
+                        
+                           
+                        
+                        <td>
+                        
+                     
+                        
+                            {{ client.user.email }}</td>
+                        <td>
+                            <span class="badge bg-success">{{ client.won_leads_count }}</span>
+                        </td>
+                        <td>{{ client.created_on|date:"F j, Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">No clients with won leads found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Search function to filter the table by email
+    function searchTable() {
+        var input = document.getElementById("search-input");
+        var filter = input.value.toUpperCase();
+        var table = document.getElementById("client-table-body");
+        var tr = table.getElementsByTagName("tr");
+
+        for (var i = 0; i < tr.length; i++) {
+            var td = tr[i].getElementsByTagName("td")[0]; // Searching based on the email column
+            if (td) {
+                var txtValue = td.textContent || td.innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

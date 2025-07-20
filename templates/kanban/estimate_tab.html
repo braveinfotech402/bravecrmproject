@@ -1,0 +1,54 @@
+ <!-- Estimate Tab -->
+  <div class="tab-content" id="leadTabsContent">
+          <div class="tab-pane fade" id="estimatetab" role="tabpanel" aria-labelledby="estimate-tab">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5>Estimates</h5>
+             <button 
+                type="button" 
+                class="btn btn-success" 
+                data-bs-toggle="modal" 
+                data-bs-target="#createEstimateModal"
+              >
+                <i class="fa fa-plus"></i> New Estimate
+              </button>
+            </div>
+          
+            <div class="container mt-4">
+              
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Estimate #</th>
+                    <th>Client</th>
+                    <th>Lead</th>
+                    <th>Issue Date</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for estimate in estimates %}
+                  <tr>
+                    <td>{{ estimate.estimate_number }}</td>
+                    <td>{{ estimate.client }}</td>
+                    <td>{{ estimate.lead }}</td>
+                    <td>{{ estimate.issue_date }}</td>
+                    <td>{{ estimate.expiry_date }}</td>
+                    <td>{{ estimate.status|title }}</td>
+                    <td>${{ estimate.total }}</td>
+                    <td>
+                      <a href="#" class="btn btn-sm btn-primary">View</a>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="8">No estimates found.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            
+            
+          </div>
+        </div>

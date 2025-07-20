@@ -1,0 +1,156 @@
+<h2 class="text-center">Profile</h2>
+
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        background-color: rgb(202, 219, 225);
+    }
+
+    .container {
+        width: 100%;
+        background: rgb(202, 219, 225);
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .btn-red {
+        background-color: red;
+        color: white;
+    }
+
+    .btn-red:hover {
+        opacity: 0.9;
+    }
+
+    .form-control {
+        width: 100%;
+        font-size: 14px;
+        padding: 8px 10px;
+        border-radius: 4px;
+    }
+
+    .text-center {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .col-md-6 {
+        flex: 1;
+        min-width: 250px;
+    }
+</style>
+
+<div class="container">
+  
+   
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>First Name</label>
+                <input type="text" class="form-control" name="firstname" value="{{ user.firstname }}">
+            </div>
+            <div class="col-md-6 form-group">
+                <label>Last Name</label>
+                <input type="text" class="form-control" name="lastname" value="{{ user.lastname }}">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>Street Name</label>
+                <input type="text" class="form-control" name="streetaddress" value="{{ user.streetaddress }}">
+            </div>
+            <div class="col-md-6 form-group">
+                <label>Street Number</label>
+                <input type="text" class="form-control" name="streetnumber" value="{{ user.streetnumber }}">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>Postal Code</label>
+                <input type="text" class="form-control" name="postalcode" value="{{ user.postalcode }}">
+            </div>
+            <div class="col-md-6 form-group">
+                <label>City</label>
+                <input type="text" class="form-control" name="city" value="{{ user.city }}">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>State</label>
+                <select class="form-control" name="state">
+                    <option {% if user.state == "Kerala" %}selected{% endif %}>Kerala</option>
+                    <option {% if user.state == "Andhra Pradesh" %}selected{% endif %}>Andhra Pradesh</option>
+                    <option {% if user.state == "Karnataka" %}selected{% endif %}>Karnataka</option>
+                    <option {% if user.state == "Tamil Nadu" %}selected{% endif %}>Tamil Nadu</option>
+                </select>
+            </div>
+            <div class="col-md-6 form-group">
+                <label>Country</label>
+                <select class="form-control" name="country">
+                    <option {% if user.country == "India" %}selected{% endif %}>India</option>
+                    <option {% if user.country == "USA" %}selected{% endif %}>USA</option>
+                    <option {% if user.country == "UK" %}selected{% endif %}>UK</option>
+                    <option {% if user.country == "Canada" %}selected{% endif %}>Canada</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>Phone Number</label>
+                <input type="text" class="form-control" name="phone" value="{{ user.phone }}">
+            </div>
+            <div class="col-md-6 form-group">
+                <label>Company Name</label>
+                <input type="text" class="form-control" name="companyname" value="{{ user.company }}">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label>Tax Number</label>
+                <input type="text" class="form-control" name="tax" value="{{ user.tax }}">
+            </div>
+            <div class="col-md-6 form-group">
+                <label>Email</label>
+                <input type="email" class="form-control" name="email" value="{{ user.email }}">
+            </div>
+        </div>
+        <div class="col-md-6 form-group">
+            <label>Profile Image</label><br>
+            {% if user.profile_image %}
+            <img src="{{ user.profile_image.url }}" alt="Profile Image" width="100" height="100" style="border-radius: 50%; margin-bottom: 10px;">
+        {% endif %}
+        
+            <input type="file" name="profile_image" class="form-control">
+        </div>
+        
+
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Update Profile</button>
+            <a href="{% url 'client_dashboard' %}" class="btn btn-red">Close</a>
+        </div>
+    </form>
+</div>

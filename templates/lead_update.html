@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .tab-content {
+    display: none;
+   
+  }
+  .tab-content.active {
+    display: block;
+  }
+  .nav-tabs {
+    border-bottom: 2px solid #ddd;
+    background: #f8f9fa;
+    padding: 5px;
+    border-radius: 15px;
+    
+}
+
+/* Tab items */
+.nav-tabs .nav-item {
+    margin-right: 5px;
+}
+
+.nav-tabs .nav-link {
+    color: #333;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Active tab */
+.nav-tabs .nav-link.active {
+    background: #007bff;
+    color: white !important;
+    border-radius: 5px;
+}
+
+/* Hover effect */
+.nav-tabs .nav-link:hover {
+    background: #007bff;
+    color: white !important;
+}
+
+/* Smooth transition */
+.nav-tabs .nav-link {
+    transition: background 0.3s, color 0.3s;
+}
+.form-container{
+  background-color: rgb(236, 241, 244);
+    max-width: 1000px;  /* Adjust the width as needed */
+     /* Centers the form horizontally */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    margin-right: 150px;
+}
+</style>
+
+<div class="container">
+  <h3>{% if lead %}{{ lead.email }}{% else %}Create New Lead{% endif %}</h3>
+  
+  <!-- Tabs -->
+ 
+
+  <!-- Profile Tab (Lead Update Form) -->
+  <div id="profile" class="tab-content active d-flex justify-content-center">
+    <form class="form-container" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="row">
+        <div class="col-md-6">
+            <label>First Name</label>
+            <input type="text" name="firstname" value="{{lead.firstname}}">
+        </div>
+        <div class="col-md-6">
+            <label>Last Name</label>
+            <input type="text" name="lastname" value="{{lead.lastname}}">
+        </div>
+    </div>
+      <div class="row">
+        <div class="col-sm-6">
+          <label>Street Name:</label>
+          <input type="text" name="streetaddress" value="{{lead.streetaddress}}">
+        </div>
+        <div class="col-sm-6">
+          <label>Street Number:</label>
+          <input type="text" name="streetnumber" value="{{lead.streetnumber}}">
+        </div>
+      </div>
+  
+      <div class="row">
+        <div class="col-sm-6">
+          <label>Postal Code:</label>
+          <input type="text" name="postalcode" value="{{lead.postalcode}}">
+        </div>
+        <div class="col-sm-6">
+          <label>City:</label>
+          <input type="text" name="city" value="{{lead.city}}">
+        </div>
+      </div>
+  
+      <div class="row">
+        <div class="col-sm-6">
+          <label>State:</label>
+          <select name="state">
+            <option selected>Kerala</option>
+            <option>Andhra Pradesh</option>
+            <option>Karnataka</option>
+            <option>Tamil Nadu</option>
+          </select>
+        </div>
+        <div class="col-sm-6">
+          <label>Country:</label>
+          <select name="country">
+            <option selected>India</option>
+            <option>USA</option>
+            <option>UK</option>
+            <option>Canada</option>
+          </select>
+        </div>
+      </div>
+  
+      <div class="row">
+        <div class="col-sm-6">
+          <label>Phone number:</label>
+          <input type="text" name="phone" value="{{lead.phone}}">
+        </div>
+        <div class="col-sm-6">
+          <label>Company Name:</label>
+          <input type="text" name="companyname" value="{{lead.companyname}}">
+        </div>
+      </div>
+  
+      <div class="row">
+        <div class="col-sm-6">
+          <label>Tax number:</label>
+          <input type="text" name="tax" value="{{lead.tax}}">
+        </div>
+        <div class="col-sm-6">
+          <label>Email:</label>
+          <input type="email" name="email" value="{{lead.email}}">
+        </div>
+      </div>
+
+       <div class="row">
+        <div class="col-sm-6">
+          <label>Upload New Image (optional)</label>
+          <input type="file" name="image" class="form-control">
+        {% if lead.image %}
+          <br>
+          <strong>Current Image:</strong><br>
+          <img src="{{ lead.image.url }}" alt="Lead Image" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 2px solid #ccc;">
+        {% endif %}
+        </div>
+        <div class="col-sm-6">
+           <label for="status">Status:</label>
+           <select class="form-control" name="status" id="status">
+          <option value="new" {% if lead.status == "new" %}selected{% endif %}>New</option>
+          <option value="followup" {% if lead.status == "followup" %}selected{% endif %}>Follow Up</option>
+          <option value="won" {% if lead.status == "won" %}selected{% endif %}>Won</option>
+          <option value="lost" {% if lead.status == "lost" %}selected{% endif %}>Lost</option>
+          <option value="later" {% if lead.status == "later" %}selected{% endif %}>Later</option>
+        </select>
+        </div>
+      </div>
+
+    <div class="row">
+        <div class="col-sm-6">
+         <label for="tags">Tags</label>
+          <input id="tagsInput" name="tags" value="{{ current_tags }}" class="form-control">
+        </div>
+        <div class="col-sm-6">
+          
+        </div>
+      </div>
+
+      
+
+
+      <button type="submit" class="btn btn-primary ">Update Lead</button>
+      <a href="{% url 'client_dashboard' %}" class="btn btn-red" >Close</a></center>
+    </form>
+  </div>
+
+  <!-- Email Tab -->
+  <div id="email" class="tab-content">
+    <h4>Send Email</h4>
+    <form method="post">
+      {% csrf_token %}
+      <label>To:</label>
+      <input type="email" name="email" value="{{ lead.email }}">
+      <label>Subject:</label>
+      <input type="text" name="subject">
+      <label>Message:</label>
+      <textarea name="message"></textarea>
+      <button type="submit" class="btn btn-success">Send Email</button>
+    </form>
+  </div>
+
+  <!-- WhatsApp Tab -->
+  <div id="whatsapp" class="tab-content">
+    <h4>Send WhatsApp Message</h4>
+    <form method="post">
+      {% csrf_token %}
+      <label>Phone:</label>
+      <input type="text" name="phone" value="{{ lead.phone }}">
+      <label>Message:</label>
+      <textarea name="whatsapp_message"></textarea>
+      <button type="button" class="btn btn-success" onclick="sendWhatsApp()">Send Message</button>
+    </form>
+  </div>
+
+
+
+  <script>
+  var input = document.querySelector('#tagsInput');
+  var tagify = new Tagify(input, {
+    whitelist: [
+      {% for tag in tags %}
+        "{{ tag.name }}",
+      {% endfor %}
+    ],
+    dropdown: {
+      enabled: 1,
+      maxItems: 20
+    }
+  });
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

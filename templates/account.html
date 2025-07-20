@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/kanban.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- CSRF Token for JS -->
+<input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+<div class="d-flex justify-content-start align-items-center mt-3" style="gap: 10px; margin-left: 20px;">
+    <button class="btn btn-success" onclick="showNewBoardInput()">+ Create New Column</button>
+    <a href="{% url 'client_dashboard' %}" class="btn btn-primary">Back</a>
+</div>
+
+<!-- Hidden input to add new board -->
+<div id="newBoardInput" style="display:none; margin-top: 10px;">
+    <input type="text" id="newBoardName" class="form-control" placeholder="Enter new column name" style="width: 300px;margin-left: 20px;">
+    <button onclick="createNewBoard()" class="btn btn-primary btn-sm mt-2">Create</button>
+</div>
+<div class="kanban-wrapper">
+<div class="kanban-board">
+    {% for status_key, status_label in statuses %}
+      <div class="kanban-column" data-status="{{ status_key }}">
+        <h3>{{ status_label }}</h3>
+        <div class="kanban-cards">
+            {% if status_key == "new" %}
+            <!-- Add Lead button only for the 'New' column, placed at the top -->
+            <div class="add-lead-card" style="background-color:#97b8cb;" onclick="window.location.href='{% url 'createlead' %}?status={{ status_key }}'">
+                + Add Lead
+            </div>
+        {% endif %}
+          {% for lead in leads %}
+            {% if lead.status == status_key %}
+              <div class="lead-card" data-lead-id="{{ lead.id }}" draggable="true">
+                {{ lead.firstname }} {{ lead.lastname }}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Lead Details Container -->
+<div id="leadDetailsContainer" class="lead-details-container" style="display: none; width: 80%; height: 100vh;">
+    <button id="closeLeadBtn" style="position: absolute; top: 10px; right: 10px; background: #ff5f5f; color: white; border: none; padding: 5px 10px; cursor: pointer; font-size: 16px; border-radius: 50%;">
+        ✖
+    </button>
+    <div style="flex: 2; padding: 10px; overflow-y: auto;border-radius:5px;" class="lead-details-left">
+        <ul class="nav nav-tabs" id="leadTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="description-tab" data-bs-toggle="tab" href="#descriptionTab" role="tab" aria-controls="descriptionTab" aria-selected="true">Description</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="invoice-tab" data-bs-toggle="tab" href="#invoiceTab" role="tab" aria-controls="invoiceTab" aria-selected="false">Estimate</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="appointments-tab" data-bs-toggle="tab" href="#appointmentsTab" role="tab" aria-controls="appointmentsTab" aria-selected="false">Invoice</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="deal-tab" data-bs-toggle="tab" href="#dealTab" role="tab" aria-controls="dealTab" aria-selected="false">Deal</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="projects-tab" data-bs-toggle="tab" href="#projectsTab" role="tab" aria-controls="projectsTab" aria-selected="false">Projects</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="meetings-tab" data-bs-toggle="tab" href="#meetingsTab" role="tab" aria-controls="meetingsTab" aria-selected="false">Meetings</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="files-tab" data-bs-toggle="tab" href="#filesTab" role="tab" aria-controls="filesTab" aria-selected="false">Files</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="financial-tab" data-bs-toggle="tab" href="#financialTab" role="tab" aria-controls="financialTab" aria-selected="false">Financial</a>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="leadTabsContent">
+            <div class="tab-pane fade show active" id="descriptionTab" role="tabpanel" aria-labelledby="description-tab">
+                <div class="form-group">
+                    <label for="leadDescription">Description</label>
+                    <textarea id="leadEditor" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="activity">Activity</label>
+                    <input type="text" class="form-control" id="activity" name="activity">
+                </div>
+                <div class="form-group">
+                    <button type="button" class="btn btn-primary" id="saveLead">Save</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeLeadForm()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="flex: 0.5; width: 250px; padding: 10px; border-left: 2px solid #ddd; background: #f9f9f9; border-radius:5px;" class="lead-details-right">
+        <button class="btn btn-sm btn-primary btn-block" onclick="callLead()">📞 Call</button>
+        <button class="btn btn-sm btn-success btn-block" onclick="whatsappLead()">💬 WhatsApp</button>
+        <button class="btn btn-sm btn-info btn-block" onclick="emailLead()">📧 Email</button>
+    </div>
+</div>
+
+<script src="{% static 'js/dragdrop.js' %}"></script>
+<script src="{% static 'js/leadviewonCKEditor.js' %}"></script>  
+<script src="{% static 'js/closebutton.js' %}"></script>
+<script src="{% static 'js/createNewBoard.js' %}"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

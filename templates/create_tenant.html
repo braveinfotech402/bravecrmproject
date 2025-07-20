@@ -1,0 +1,9 @@
+<h2>Create New Tenant</h2>
+<form method="post">
+  {% csrf_token %}
+  <label>Name:</label><input type="text" name="name"><br>
+  <label>Email:</label><input type="email" name="email"><br>
+  <label>Schema Name:</label><input type="text" name="schema_name"><br>
+  <label>Domain:</label><input type="text" name="domain"><br>
+  <button type="submit">Create Tenant</button>
+</form>

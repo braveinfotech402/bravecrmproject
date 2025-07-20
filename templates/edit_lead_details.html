@@ -1,0 +1,20 @@
+{% load static %}
+
+<h1>Edit Lead Details</h1>
+
+<form method="POST">
+    {% csrf_token %}
+    <textarea id="id_description" name="description">{{ lead_details_html|safe }}</textarea>
+    <br/>
+    <button type="submit">Save</button>
+</form>
+
+<!-- CKEditor 5 Classic build from CDN -->
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+<script>
+ClassicEditor
+    .create(document.querySelector('#id_description'))
+    .catch(error => {
+        console.error(error);
+    });
+</script>

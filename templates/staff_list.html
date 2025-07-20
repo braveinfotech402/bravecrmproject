@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title></title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <style>
+    .table-container {
+      max-width: 500px; /* Adjust the width as needed */
+      width: 80%; /* Set a relative width */
+      margin: auto; /* Center the table */
+  }
+  
+  .table {
+      width: 100%; /* Ensure the table uses the container width */
+      background-color: white; /* Keep table readable */
+  }
+  
+  .table th, .table td {
+      white-space: nowrap; /* Prevent excessive wrapping */
+      text-align: left; /* Align text properly */
+  }
+  
+  @media screen and (max-width: 600px) {
+      .table-container {
+          width: 100%; /* Make it responsive */
+      }
+  }
+  </style>
+</head>
+<body class="bg">
+ 
+  {% if messages %}
+  <div class="container mt-3">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="table-container">
+  <table class="table  table-striped">
+    <thead>
+      <tr>
+        <th >Name</th>
+        <th >Email</th>
+      
+        <th >Whtasapp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for staff in staff_list %}
+      <tr>
+        <td style="text-align:left">{{ staff.name }}</td>
+        <td style="text-align:left">{{ staff.email }}</td>
+        <td style="text-align:left">{{ staff.whatsapp }}</td>
+        <td>
+          
+          <a href="{% url 'edit_staff' staff.id %}" class="btn btn-warning btn-sm">Edit</a>
+          <form action="{% url 'delete_staff' staff.id %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+          
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4" class="text-center">No staff available.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+   
+  </table>
+  <a href="{% url 'client_create_staff' %}" class="btn btn-primary btn-sm">Create staff</a>
+  </div>
+</form> 
+</body>
+</html>
+
+
+
+
+
+
+

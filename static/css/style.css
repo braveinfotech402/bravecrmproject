@@ -1,0 +1,256 @@
+
+.btn-custom {
+  background-color: rgb(33, 170, 216);
+  color: white;
+  padding: 14px 20px;
+  border: none;
+  cursor: pointer;
+  width: 150px;
+  font-size: 16px;
+  margin: 10px auto;
+  border-radius: 5px;
+  text-decoration: none;
+}
+
+.btn-custom:hover {
+  opacity: 0.9;
+}
+.form-control {
+padding: 5px;
+font-size: 14px;
+height: 50px;
+width:50px;
+
+}
+
+.form-container {
+  
+  background:white;
+  padding: 20px;
+  border-radius:7px ;
+  width: 97%;
+  position: absolute;
+  right: 20px;
+  
+  
+}
+
+.form-container input,
+.form-container select {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 2px solid #ccc;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.btn-green {
+  background-color: #04AA6D;
+  color: white;
+}
+
+
+.btn-red {
+  background-color: red;
+  color: white;
+}
+
+.btn-green:hover, .btn-red:hover {
+  opacity: 0.9;
+}
+
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+.label{
+font-size: 12px;
+}
+form.example input[type=text] {
+padding: 10px;
+font-size: 17px;
+border: 1px solid grey;
+float: left;
+width: 40%;
+background: white;
+margin-right: 500px;
+border-top-left-radius: 8px;
+border-bottom-left-radius: 8px;
+
+}
+
+form.example button {
+float: left;
+width: 5%;
+padding: 10px;
+background: rgb(33, 170, 216);
+color: white;
+font-size: 17px;
+border: 1px solid grey;
+border-left: none;
+cursor: pointer;
+border-top-right-radius: 8px;
+border-bottom-right-radius: 8px;
+
+}
+
+form.example button:hover {
+background: #0b7dda;
+}
+
+form.example::after {
+content: "";
+clear: both;
+display: table;
+}
+.img{
+width: 50px;
+height: 50px;
+border-radius: 50%;
+cursor: pointer;
+
+}
+.dropdown {
+position: relative;
+display: inline-block;
+}
+.dropdown-menu {
+display: none; /* Hide by default */
+position: absolute;
+top: 100%;
+left: 0;
+background: darkblue;
+border: 1px solid #99cbee;
+border-radius: 15px;
+color:white;
+box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+min-width: 150px;
+z-index: 1000;
+padding: 0;
+list-style: none;
+}
+.dropdown-menu li {
+padding: 10px;
+}
+.dropdown-menu a {
+display: block;
+text-decoration: none;
+color: #333;
+padding: 10px;
+}
+.dropdown-menu a:hover {
+background: #75cbd8;
+}
+
+@media screen and (max-width: 768px) {
+  .form-popup {
+      width: 80%;}
+     
+  }
+  select {
+    width: 350px; /* Adjust width */
+    height: 48px; /* Adjust height */
+    padding: 8px; /* Add padding */
+    font-size: 16px; /* Adjust font size */
+    border: 2px solid #ccc; /* Border color */
+    border-radius: 8px; /* Rounded corners */
+    background-color: white; /* Background color */
+    cursor: pointer; /* Pointer cursor */
+    outline: none; /* Remove outline on focus */
+    transition: 0.3s; /* Smooth effect */
+    margin-right: 250px;
+}
+
+select:hover {
+    border-color: #0b7dda; /* Change border color on hover */
+}
+
+select:focus {
+    border-color: rgb(33, 170, 216); /* Highlight border on focus */
+    box-shadow: 0 0 5px rgba(33, 170, 216, 0.5); /* Add glow effect */
+}  
+.form-popup {
+  display: none;  /* Hide the popup initially */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 750px;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 1001;
+}
+
+.overlay {
+  display: none; /* Hide overlay initially */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+
+/* Centered form */
+.popup-form-container {
+  text-align: left;
+  background:white;
+  padding: 20px;
+}
+
+
+/* Close button */
+.btn-red {
+  background: red;
+  color: white;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+}      
+
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background: white;
+  padding: 20px;
+  position: fixed; /* Keep sidebar fixed */
+  top: 120px; /* Adjust based on navbar height */
+  left: 0;
+  overflow-y: auto;
+  border-radius: 8px;
+}
+.content {
+    flex: 1;
+    margin-bottom: 50%;
+    margin-left: 300px; /* Push content right of sidebar */
+    padding: 20px;
+    top: 150px; /* Adjust this if needed */
+    min-height: calc(100vh - 50px); /* Prevents content from collapsing */
+    background: #fff; /* Optional: Background for better visibility */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Optional: Adds a slight shadow */
+    border-radius: 8px;
+    margin-right: 100px;
+  
+}
+.menu-item {
+    display: block;
+    padding: 10px;
+    cursor: pointer;
+    background:rgb(227, 227, 236);
+    margin: 5px 0;
+    text-align: center;
+    margin-top: 15px;
+}
+.menu-item:hover {
+    background: #bbb;
+}
